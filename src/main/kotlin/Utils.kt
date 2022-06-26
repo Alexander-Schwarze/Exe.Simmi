@@ -16,3 +16,9 @@ class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream
         it.write(b, off, len)
     }
 }
+
+data class DiscordMessageContent (
+    val message: String,
+    val user: String,
+    val channel: String
+)

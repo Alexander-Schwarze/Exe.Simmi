@@ -126,6 +126,13 @@ private fun setupTwitchBot(): TwitchClient {
     return twitchClient
 }
 
+fun sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent){
+    // TODO: Establish communication to Discord Bot
+    logger.info("User: ${discordMessageContent.user}")
+    logger.info("Message: ${discordMessageContent.message}")
+    logger.info("Channel: ${discordMessageContent.channel}")
+}
+
 private const val LOG_DIRECTORY = "logs"
 
 fun setupLogging() {
