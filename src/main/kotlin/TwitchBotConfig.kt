@@ -3,7 +3,7 @@ import java.util.*
 
 object TwitchBotConfig {
     private val properties = Properties().apply {
-        load(File("data/twitchBotconfig.properties").inputStream())
+        load(File("data/twitchBotConfig.properties").inputStream())
     }
 
     val channel: String = properties.getProperty("channel")

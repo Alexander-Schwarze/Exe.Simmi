@@ -23,7 +23,14 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:1.7.36")
     implementation("com.github.kwhat:jnativehook:2.2.2")
     implementation("com.github.twitch4j:twitch4j:1.10.0")
+
+    configurations {
+        implementation("com.jessecorbett:diskord-bot:2.1.1") {
+            exclude("org.slf4j", "slf4j-simple")
+        }
+    }
 }
+
 
 tasks.withType<KotlinCompile> {
     kotlin.sourceSets.all {

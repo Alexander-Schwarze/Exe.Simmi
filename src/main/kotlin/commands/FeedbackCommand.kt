@@ -8,13 +8,12 @@ import sendMessageToDiscordBot
 val feedbackCommand: Command = Command(
     names = listOf("fb", "feedback"),
     handler = { arguments ->
-        // TODO: Get channel name from discord bot config
         val currentMessage: DiscordMessageContent = DiscordMessageContent(
             message = arguments.joinToString(" "),
             user = user.name,
-            channel = "#feedback"
+            channel = DiscordBotConfig.feedbackChannelName
         )
         sendMessageToDiscordBot(currentMessage)
-        chat.sendMessage(TwitchBotConfig.channel, "Message sent in #feedback")
+        chat.sendMessage(TwitchBotConfig.channel, "Message sent in ${DiscordBotConfig.feedbackChannelName}")
     }
 )

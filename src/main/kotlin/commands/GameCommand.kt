@@ -6,15 +6,14 @@ import DiscordMessageContent
 import sendMessageToDiscordBot
 
 val gameCommand: Command = Command(
-    names = listOf("game"),
+    names = listOf("g", "game"),
     handler = { arguments ->
-        // TODO: Get channel name from discord bot config
         val currentMessage = DiscordMessageContent(
             message = arguments.joinToString(" "),
             user = user.name,
-            channel = "#spievorschläge"
+            channel = DiscordBotConfig.gameChannelName
         )
         sendMessageToDiscordBot(currentMessage)
-        chat.sendMessage(TwitchBotConfig.channel, "Message sent in #feeback")
+        chat.sendMessage(TwitchBotConfig.channel, "Message sent in ${DiscordBotConfig.gameChannelName}")
     }
 )
