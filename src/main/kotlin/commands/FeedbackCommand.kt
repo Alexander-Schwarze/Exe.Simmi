@@ -8,8 +8,13 @@ import sendMessageToDiscordBot
 val feedbackCommand: Command = Command(
     names = listOf("fb", "feedback"),
     handler = { arguments ->
+        val message = arguments.joinToString(" ")
+        if(message.trim().isEmpty()){
+            chat.sendMessage(TwitchBotConfig.channel, "No input has been provided")
+            return@Command
+        }
         val currentMessage: DiscordMessageContent = DiscordMessageContent(
-            message = arguments.joinToString(" "),
+            message = message,
             user = user.name,
             channel = DiscordBotConfig.feedbackChannelName
         )

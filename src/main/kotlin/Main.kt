@@ -1,4 +1,5 @@
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -9,8 +10,15 @@ import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
+import dev.kord.core.Kord
+import dev.kord.core.entity.ReactionEmoji
+import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.on
+import dev.kord.gateway.Intent
+import dev.kord.gateway.PrivilegedIntent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.io.*
@@ -21,15 +29,22 @@ import java.time.Instant
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
+
 
 val logger: org.slf4j.Logger = LoggerFactory.getLogger("Bot")
 val commandHandlerCoroutineScope = CoroutineScope(Dispatchers.IO)
+lateinit var discordClient: Kord
 
 fun main() = try {
     setupLogging()
 
     application {
+        LaunchedEffect(Unit) {
+            setupDiscordBot()
+        }
+
         DisposableEffect(Unit) {
             val twitchClient = setupTwitchBot()
 
@@ -55,15 +70,12 @@ fun main() = try {
 
 private fun setupTwitchBot(): TwitchClient {
     val chatAccountToken = File("data/twitchtoken.txt").readText()
-    logger.info("Token extracted")
 
     val twitchClient = TwitchClientBuilder.builder()
         .withEnableHelix(true)
         .withEnableChat(true)
         .withChatAccount(OAuth2Credential("twitch", chatAccountToken))
         .build()
-
-    logger.info("Twitch Client Build")
 
     val nextAllowCommandUsageInstantPerUser = mutableMapOf<Pair<Command, /* user: */ String>, Instant>()
 
@@ -72,7 +84,6 @@ private fun setupTwitchBot(): TwitchClient {
         joinChannel(TwitchBotConfig.channel)
         sendMessage(TwitchBotConfig.channel, "Bot running peepoArrive")
     }
-    logger.info("Connected to Twitch Chat")
 
     twitchClient.eventManager.onEvent(ChannelMessageEvent::class.java) { messageEvent ->
         val message = messageEvent.message
@@ -124,6 +135,30 @@ private fun setupTwitchBot(): TwitchClient {
 
     logger.info("Twitch client started.")
     return twitchClient
+}
+
+private suspend fun setupDiscordBot() {
+    val discordToken = File("data/discordtoken.txt").readText()
+    discordClient = Kord(discordToken)
+    val pingPong = ReactionEmoji.Unicode("\uD83C\uDFD3")
+
+    discordClient.on<MessageCreateEvent> {
+        if (message.content != "!ping") return@on
+
+        val response = message.channel.createMessage("Pong!")
+        response.addReaction(pingPong)
+
+        delay(5.seconds)
+        message.delete()
+        response.delete()
+    }
+
+    logger.info("Discord Bot client started.")
+    discordClient.login {
+        @OptIn(PrivilegedIntent::class)
+        intents += Intent.MessageContent
+    }
+
 }
 
 fun sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent){
