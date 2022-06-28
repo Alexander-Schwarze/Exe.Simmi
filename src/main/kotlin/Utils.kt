@@ -1,6 +1,4 @@
 import dev.kord.common.entity.Snowflake
-import dev.kord.core.behavior.channel.TextChannelBehavior
-import dev.kord.core.entity.channel.TextChannel
 import java.io.OutputStream
 
 class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream() {

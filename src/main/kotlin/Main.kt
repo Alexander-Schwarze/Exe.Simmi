@@ -153,7 +153,7 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     val user = discordMessageContent.user
     val message = discordMessageContent.message
 
-    val channel = discordClient.getChannelOf<TextChannel>(DiscordBotConfig.feedbackChannelId, EntitySupplyStrategy.cacheWithCachingRestFallback)
+    val channel = discordClient.getChannelOf<TextChannel>(discordMessageContent.channelId, EntitySupplyStrategy.cacheWithCachingRestFallback)
         ?: error("Invalid channel ID.")
 
     val channelName = channel.name
@@ -161,14 +161,10 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
 
     logger.info("User: $user | Message: $message | Channel Name: $channelName | Channel ID: $channelId")
 
-    val twitchAuthor = EmbedBuilder.Author().apply {
-        name = "Twitch user ${discordMessageContent.user}"
-    }
-
     channel.createEmbed {
         title = "Suggestion for $channelName"
         author {
-            name = "Twitch user ${discordMessageContent.user}"
+            name = "Twitch user $user"
         }
         description = discordMessageContent.message
         color = Color(233,166,35)
