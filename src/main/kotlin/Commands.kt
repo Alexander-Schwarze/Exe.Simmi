@@ -2,7 +2,7 @@
 import com.github.twitch4j.chat.TwitchChat
 import com.github.twitch4j.common.events.domain.EventUser
 import commands.feedbackCommand
-import commands.gameCommand
+import commands.gameSuggestionCommand
 import commands.helpCommand
 import kotlin.time.Duration
 
@@ -20,5 +20,5 @@ data class CommandHandlerScope(
 val commands = listOf(
     helpCommand,
     feedbackCommand,
-    gameCommand
+    gameSuggestionCommand
 )

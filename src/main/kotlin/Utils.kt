@@ -20,5 +20,10 @@ class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream
 data class DiscordMessageContent (
     val message: String,
     val user: String,
-    val channel: String
+    val channel: DiscordChannelData
+)
+
+data class DiscordChannelData (
+    val name: String,
+    val id: Long
 )

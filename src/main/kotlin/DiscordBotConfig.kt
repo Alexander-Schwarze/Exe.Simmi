@@ -6,6 +6,12 @@ object DiscordBotConfig {
         load(File("data/discordBotconfig.properties").inputStream())
     }
 
-    val feedbackChannelName: String = properties.getProperty("feedback_channel_name")
-    val gameChannelName: String = properties.getProperty("game_channel_name")
+    val feedbackChannel = DiscordChannelData (
+        name = properties.getProperty("feedback_channel_name"),
+        id = properties.getProperty("feedback_channel_id").toLong()
+    )
+    val gameChannel = DiscordChannelData(
+        name = properties.getProperty("game_channel_name"),
+        id = properties.getProperty("game_channel_id").toLong()
+    )
 }

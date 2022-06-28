@@ -1,3 +1,4 @@
+import TwitchBotConfig.channel
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.DpSize
@@ -10,16 +11,21 @@ import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.entity.ReactionEmoji
+import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.on
+import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonNull.content
 import org.slf4j.LoggerFactory
 import java.io.*
 import java.nio.file.Files
@@ -153,19 +159,30 @@ private suspend fun setupDiscordBot() {
         response.delete()
     }
 
-    logger.info("Discord Bot client started.")
+    logger.info("Discord client started.")
+
     discordClient.login {
         @OptIn(PrivilegedIntent::class)
         intents += Intent.MessageContent
     }
-
 }
 
-fun sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent){
+suspend fun sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent){
     // TODO: Establish communication to Discord Bot
-    logger.info("User: ${discordMessageContent.user}")
-    logger.info("Message: ${discordMessageContent.message}")
-    logger.info("Channel: ${discordMessageContent.channel}")
+    val user = discordMessageContent.user
+    val message = discordMessageContent.message
+    val channelName = discordMessageContent.channel.name
+    val channelId = discordMessageContent.channel.id
+
+    logger.info("User: $user | Message: $message | Channel Name: $channelName | Channel ID: $channelId")
+
+    val content = "Suggestion for $channelName\n" +
+            "Issued by Twitch-User: ${discordMessageContent.user}\n" +
+            "Content:\n${discordMessageContent.message}"
+
+    discordClient.apply {
+        getChannelOf<TextChannel>(Snowflake(channelId))!!.createMessage(content)
+    }
 }
 
 private const val LOG_DIRECTORY = "logs"

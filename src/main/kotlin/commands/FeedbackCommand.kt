@@ -13,12 +13,12 @@ val feedbackCommand: Command = Command(
             chat.sendMessage(TwitchBotConfig.channel, "No input has been provided")
             return@Command
         }
-        val currentMessage: DiscordMessageContent = DiscordMessageContent(
+        val currentMessageContent: DiscordMessageContent = DiscordMessageContent(
             message = message,
             user = user.name,
-            channel = DiscordBotConfig.feedbackChannelName
+            channel = DiscordBotConfig.feedbackChannel
         )
-        sendMessageToDiscordBot(currentMessage)
-        chat.sendMessage(TwitchBotConfig.channel, "Message sent in ${DiscordBotConfig.feedbackChannelName}")
+        sendMessageToDiscordBot(currentMessageContent)
+        chat.sendMessage(TwitchBotConfig.channel, "Message sent in ${DiscordBotConfig.feedbackChannel.name}")
     }
 )
