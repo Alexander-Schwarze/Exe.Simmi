@@ -1,6 +1,7 @@
 import TwitchBotConfig.channel
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -13,6 +14,8 @@ import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
+import dev.kord.core.behavior.channel.createEmbed
+import dev.kord.core.cache.data.EmbedAuthorData
 import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.gateway.ReadyEvent
@@ -21,6 +24,7 @@ import dev.kord.core.on
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
+import dev.kord.rest.builder.message.EmbedBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -180,8 +184,16 @@ suspend fun sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent
             "Issued by Twitch-User: ${discordMessageContent.user}\n" +
             "Content:\n${discordMessageContent.message}"
 
+    val twitchAuthor = EmbedBuilder.Author()
+    twitchAuthor.name = "Twitch-User ${discordMessageContent.user}"
+
     discordClient.apply {
-        getChannelOf<TextChannel>(Snowflake(channelId))!!.createMessage(content)
+        getChannelOf<TextChannel>(Snowflake(channelId))!!.createEmbed {
+            title = "Suggestion for $channelName"
+            author = twitchAuthor
+            description = discordMessageContent.message
+            image = "\uD83E\uDDE0"
+        }
     }
 }
 
