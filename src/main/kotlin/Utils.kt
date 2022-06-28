@@ -1,3 +1,6 @@
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.channel.TextChannelBehavior
+import dev.kord.core.entity.channel.TextChannel
 import java.io.OutputStream
 
 class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream() {
@@ -20,10 +23,5 @@ class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream
 data class DiscordMessageContent (
     val message: String,
     val user: String,
-    val channel: DiscordChannelData
-)
-
-data class DiscordChannelData (
-    val name: String,
-    val id: Long
+    val channelId: Snowflake
 )

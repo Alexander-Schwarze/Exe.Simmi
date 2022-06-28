@@ -4,6 +4,7 @@ import com.github.twitch4j.common.events.domain.EventUser
 import commands.feedbackCommand
 import commands.gameSuggestionCommand
 import commands.helpCommand
+import dev.kord.core.Kord
 import kotlin.time.Duration
 
 data class Command(
@@ -12,6 +13,7 @@ data class Command(
 )
 
 data class CommandHandlerScope(
+    val discordClient: Kord,
     val chat: TwitchChat,
     val user: EventUser,
     var addedUserCooldown: Duration = Duration.ZERO

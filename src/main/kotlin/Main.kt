@@ -1,7 +1,4 @@
-import TwitchBotConfig.channel
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -12,24 +9,18 @@ import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
-import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.createEmbed
-import dev.kord.core.cache.data.EmbedAuthorData
-import dev.kord.core.entity.ReactionEmoji
 import dev.kord.core.entity.channel.TextChannel
-import dev.kord.core.event.gateway.ReadyEvent
-import dev.kord.core.event.message.MessageCreateEvent
-import dev.kord.core.on
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import dev.kord.rest.builder.message.EmbedBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonNull.content
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.*
 import java.nio.file.Files
@@ -39,25 +30,32 @@ import java.time.Instant
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 
-val logger: org.slf4j.Logger = LoggerFactory.getLogger("Bot")
+val logger: Logger = LoggerFactory.getLogger("Bot")
 val commandHandlerCoroutineScope = CoroutineScope(Dispatchers.IO)
-lateinit var discordClient: Kord
 
-fun main() = try {
+
+suspend fun main() = try {
     setupLogging()
 
-    application {
-        LaunchedEffect(Unit) {
-            setupDiscordBot()
+    val discordToken = File("data/discordtoken.txt").readText()
+    val discordClient = Kord(discordToken)
+
+    logger.info("Discord client started.")
+
+    CoroutineScope(discordClient.coroutineContext).launch {
+        discordClient.login {
+            @OptIn(PrivilegedIntent::class)
+            intents += Intent.MessageContent
         }
+    }
 
+    val twitchClient = setupTwitchBot(discordClient)
+
+    application {
         DisposableEffect(Unit) {
-            val twitchClient = setupTwitchBot()
-
             onDispose {
                 twitchClient.chat.sendMessage(TwitchBotConfig.channel, "Bot shutting down peepoLeave")
                 logger.info("App shutting down...")
@@ -78,7 +76,7 @@ fun main() = try {
     exitProcess(0)
 }
 
-private fun setupTwitchBot(): TwitchClient {
+private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
     val chatAccountToken = File("data/twitchtoken.txt").readText()
 
     val twitchClient = TwitchClientBuilder.builder()
@@ -87,7 +85,7 @@ private fun setupTwitchBot(): TwitchClient {
         .withChatAccount(OAuth2Credential("twitch", chatAccountToken))
         .build()
 
-    val nextAllowCommandUsageInstantPerUser = mutableMapOf<Pair<Command, /* user: */ String>, Instant>()
+    val nextAllowedCommandUsageInstantPerUser = mutableMapOf<Pair<Command, /* user: */ String>, Instant>()
 
     twitchClient.chat.run {
         connect()
@@ -116,12 +114,12 @@ private fun setupTwitchBot(): TwitchClient {
 
         logger.info("User '${messageEvent.user.name}' tried using command '${command.names.first()}' with arguments: ${parts.drop(1).joinToString()}")
 
-        val nextAllowCommandUsageInstant = nextAllowCommandUsageInstantPerUser.getOrPut(command to messageEvent.user.name) {
+        val nextAllowedCommandUsageInstant = nextAllowedCommandUsageInstantPerUser.getOrPut(command to messageEvent.user.name) {
             Instant.now()
         }
 
-        if (Instant.now().isBefore(nextAllowCommandUsageInstant) && CommandPermission.MODERATOR !in messageEvent.permissions) {
-            val secondsUntilTimeoutOver = Duration.between(Instant.now(), nextAllowCommandUsageInstant).seconds
+        if (Instant.now().isBefore(nextAllowedCommandUsageInstant) && CommandPermission.MODERATOR !in messageEvent.permissions) {
+            val secondsUntilTimeoutOver = Duration.between(Instant.now(), nextAllowedCommandUsageInstant).seconds
 
             twitchClient.chat.sendMessage(
                 TwitchBotConfig.channel,
@@ -133,13 +131,16 @@ private fun setupTwitchBot(): TwitchClient {
         }
 
         val commandHandlerScope = CommandHandlerScope(
+            discordClient = discordClient,
             chat = twitchClient.chat,
             user = messageEvent.user
         )
 
         commandHandlerCoroutineScope.launch {
             command.handler(commandHandlerScope, parts.drop(1))
-            nextAllowCommandUsageInstantPerUser[command to messageEvent.user.name]!!.plus(commandHandlerScope.addedUserCooldown.toJavaDuration())
+
+            val key = command to messageEvent.user.name
+            nextAllowedCommandUsageInstantPerUser[key] = nextAllowedCommandUsageInstantPerUser[key]!!.plus(commandHandlerScope.addedUserCooldown.toJavaDuration())
         }
     }
 
@@ -147,54 +148,30 @@ private fun setupTwitchBot(): TwitchClient {
     return twitchClient
 }
 
-private suspend fun setupDiscordBot() {
-    val discordToken = File("data/discordtoken.txt").readText()
-    discordClient = Kord(discordToken)
-    val pingPong = ReactionEmoji.Unicode("\uD83C\uDFD3")
-
-    discordClient.on<MessageCreateEvent> {
-        if (message.content != "!ping") return@on
-
-        val response = message.channel.createMessage("Pong!")
-        response.addReaction(pingPong)
-
-        delay(5.seconds)
-        message.delete()
-        response.delete()
-    }
-
-    logger.info("Discord client started.")
-
-    discordClient.login {
-        @OptIn(PrivilegedIntent::class)
-        intents += Intent.MessageContent
-    }
-}
-
-suspend fun sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent){
-    // TODO: Establish communication to Discord Bot
+suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent): TextChannel {
+    // TODO: Establish communication to Discord bot
     val user = discordMessageContent.user
     val message = discordMessageContent.message
-    val channelName = discordMessageContent.channel.name
-    val channelId = discordMessageContent.channel.id
+
+    val channel = discordClient.getChannelOf<TextChannel>(DiscordBotConfig.feedbackChannelId, EntitySupplyStrategy.cacheWithCachingRestFallback)
+        ?: error("Invalid channel ID.")
+
+    val channelName = channel.name
+    val channelId = channel.id
 
     logger.info("User: $user | Message: $message | Channel Name: $channelName | Channel ID: $channelId")
 
-    val content = "Suggestion for $channelName\n" +
-            "Issued by Twitch-User: ${discordMessageContent.user}\n" +
-            "Content:\n${discordMessageContent.message}"
-
-    val twitchAuthor = EmbedBuilder.Author()
-    twitchAuthor.name = "Twitch-User ${discordMessageContent.user}"
-
-    discordClient.apply {
-        getChannelOf<TextChannel>(Snowflake(channelId))!!.createEmbed {
-            title = "Suggestion for $channelName"
-            author = twitchAuthor
-            description = discordMessageContent.message
-            image = "\uD83E\uDDE0"
-        }
+    val twitchAuthor = EmbedBuilder.Author().apply {
+        name = "Twitch user ${discordMessageContent.user}"
     }
+
+    channel.createEmbed {
+        title = "Suggestion for $channelName"
+        author = twitchAuthor
+        description = discordMessageContent.message
+    }
+
+    return channel
 }
 
 private const val LOG_DIRECTORY = "logs"
