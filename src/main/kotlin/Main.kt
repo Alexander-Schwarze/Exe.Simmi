@@ -9,6 +9,7 @@ import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
+import dev.kord.common.Color
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.entity.channel.TextChannel
@@ -149,7 +150,6 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
 }
 
 suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent): TextChannel {
-    // TODO: Establish communication to Discord bot
     val user = discordMessageContent.user
     val message = discordMessageContent.message
 
@@ -167,8 +167,11 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
 
     channel.createEmbed {
         title = "Suggestion for $channelName"
-        author = twitchAuthor
+        author {
+            name = "Twitch user ${discordMessageContent.user}"
+        }
         description = discordMessageContent.message
+        color = Color(233,166,35)
     }
 
     return channel
