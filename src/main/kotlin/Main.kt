@@ -87,6 +87,7 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
         .build()
 
     val nextAllowedCommandUsageInstantPerUser = mutableMapOf<Pair<Command, /* user: */ String>, Instant>()
+    val nextAllowedCommandUsageInstantPerCommand = mutableMapOf<Command, Instant>()
 
     twitchClient.chat.run {
         connect()
@@ -119,6 +120,22 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
             Instant.now()
         }
 
+        val nextAllowedGlobalCommandUsageInstant = nextAllowedCommandUsageInstantPerCommand.getOrPut(command) {
+            Instant.now()
+        }
+
+        if (Instant.now().isBefore(nextAllowedGlobalCommandUsageInstant) && CommandPermission.MODERATOR !in messageEvent.permissions) {
+            val secondsUntilTimeoutOver = Duration.between(Instant.now(), nextAllowedGlobalCommandUsageInstant).seconds
+
+            twitchClient.chat.sendMessage(
+                TwitchBotConfig.channel,
+                "The command is still on cooldown. Please try again in $secondsUntilTimeoutOver seconds."
+            )
+            logger.info("Unable to execute command due to ongoing command cooldown.")
+
+            return@onEvent
+        }
+
         if (Instant.now().isBefore(nextAllowedCommandUsageInstant) && CommandPermission.MODERATOR !in messageEvent.permissions) {
             val secondsUntilTimeoutOver = Duration.between(Instant.now(), nextAllowedCommandUsageInstant).seconds
 
@@ -126,7 +143,7 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
                 TwitchBotConfig.channel,
                 "You are still on cooldown. Please try again in $secondsUntilTimeoutOver seconds."
             )
-            logger.info("Unable to execute command due to ongoing cooldown.")
+            logger.info("Unable to execute command due to ongoing user cooldown.")
 
             return@onEvent
         }
@@ -142,6 +159,8 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
 
             val key = command to messageEvent.user.name
             nextAllowedCommandUsageInstantPerUser[key] = nextAllowedCommandUsageInstantPerUser[key]!!.plus(commandHandlerScope.addedUserCooldown.toJavaDuration())
+
+            nextAllowedCommandUsageInstantPerCommand[command] = nextAllowedCommandUsageInstantPerCommand[command]!!.plus(commandHandlerScope.addedCommandCooldown.toJavaDuration())
         }
     }
 

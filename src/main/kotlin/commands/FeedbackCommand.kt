@@ -26,5 +26,6 @@ val feedbackCommand: Command = Command(
         chat.sendMessage(TwitchBotConfig.channel, "Message sent in #${channel.name}.")
 
         addedUserCooldown = TwitchBotConfig.userCooldown
+        addedCommandCooldown = TwitchBotConfig.commandCooldown
     }
 )

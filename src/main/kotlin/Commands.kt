@@ -16,7 +16,8 @@ data class CommandHandlerScope(
     val discordClient: Kord,
     val chat: TwitchChat,
     val user: EventUser,
-    var addedUserCooldown: Duration = Duration.ZERO
+    var addedUserCooldown: Duration = Duration.ZERO,
+    var addedCommandCooldown: Duration = Duration.ZERO
 )
 
 val commands = listOf(
