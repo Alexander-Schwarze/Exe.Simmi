@@ -5,6 +5,7 @@ import Command
 import DiscordMessageContent
 import sendMessageToDiscordBot
 import kotlin.time.Duration.Companion.seconds
+import logger
 
 val feedbackCommand: Command = Command(
     names = listOf("fb", "feedback"),
@@ -23,7 +24,8 @@ val feedbackCommand: Command = Command(
         )
 
         val channel = sendMessageToDiscordBot(currentMessageContent)
-        chat.sendMessage(TwitchBotConfig.channel, "Message sent in #${channel.name}.")
+        val messageSentOnTwitchChat = chat.sendMessage(TwitchBotConfig.channel, "Message sent in #${channel.name}.")
+        logger.info("Message sent to Twich Chat: $messageSentOnTwitchChat")
 
         addedUserCooldown = TwitchBotConfig.userCooldown
         addedCommandCooldown = TwitchBotConfig.commandCooldown

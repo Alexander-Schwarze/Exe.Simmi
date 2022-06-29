@@ -189,6 +189,8 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
         color = Color(233,166,35)
     }
 
+    logger.info("Embed on Discord Channel $channelName")
+
     return channel
 }
 
