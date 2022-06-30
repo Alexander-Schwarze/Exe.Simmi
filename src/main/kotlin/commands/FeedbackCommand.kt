@@ -12,7 +12,7 @@ val feedbackCommand: Command = Command(
     handler = { arguments ->
         val message = arguments.joinToString(" ")
         if (message.trim().isEmpty()) {
-            chat.sendMessage(TwitchBotConfig.channel, "No input has been provided")
+            chat.sendMessage(TwitchBotConfig.channel, "No input has been provided ${TwitchBotConfig.rejectEmote}")
             addedUserCooldown = 5.seconds
             return@Command
         }
@@ -24,7 +24,7 @@ val feedbackCommand: Command = Command(
         )
 
         val channel = sendMessageToDiscordBot(currentMessageContent)
-        val messageSentOnTwitchChat = chat.sendMessage(TwitchBotConfig.channel, "Message sent in #${channel.name}.")
+        val messageSentOnTwitchChat = chat.sendMessage(TwitchBotConfig.channel, "Message sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
         logger.info("Message sent to Twich Chat: $messageSentOnTwitchChat")
 
         addedUserCooldown = TwitchBotConfig.userCooldown

@@ -12,4 +12,8 @@ object TwitchBotConfig {
     val commandPrefix: String = properties.getProperty("command_prefix")
     val userCooldown = properties.getProperty("user_cooldown_seconds").toInt().seconds
     val commandCooldown = properties.getProperty("command_cooldown_seconds").toInt().seconds
+    val leaveEmote: String = properties.getProperty("leave_emote")
+    val arriveEmote: String = properties.getProperty("arrive_emote")
+    val confirmEmote: String = properties.getProperty("confirm_emote")
+    val rejectEmote: String = properties.getProperty("reject_emote")
 }

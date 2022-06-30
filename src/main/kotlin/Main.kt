@@ -16,10 +16,8 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
-import dev.kord.rest.builder.message.EmbedBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -58,7 +56,7 @@ suspend fun main() = try {
     application {
         DisposableEffect(Unit) {
             onDispose {
-                twitchClient.chat.sendMessage(TwitchBotConfig.channel, "Bot shutting down peepoLeave")
+                twitchClient.chat.sendMessage(TwitchBotConfig.channel, "Bot shutting down ${TwitchBotConfig.leaveEmote}")
                 logger.info("App shutting down...")
             }
         }
@@ -92,7 +90,7 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
     twitchClient.chat.run {
         connect()
         joinChannel(TwitchBotConfig.channel)
-        sendMessage(TwitchBotConfig.channel, "Bot running peepoArrive")
+        sendMessage(TwitchBotConfig.channel, "Bot running ${TwitchBotConfig.arriveEmote}")
     }
 
     twitchClient.eventManager.onEvent(ChannelMessageEvent::class.java) { messageEvent ->
