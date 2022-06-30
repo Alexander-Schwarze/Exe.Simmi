@@ -9,4 +9,5 @@ object DiscordBotConfig {
 
     val feedbackChannelId = Snowflake(properties.getProperty("feedback_channel_id").toLong())
     val gameChannelId = Snowflake(properties.getProperty("game_channel_id").toLong())
+    val clipChannelId = Snowflake(properties.getProperty("clip_channel_id").toLong())
 }

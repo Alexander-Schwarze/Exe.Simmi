@@ -16,6 +16,7 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
+import dev.kord.rest.builder.message.EmbedBuilder.Limits.title
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -168,7 +169,9 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
 
 suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: DiscordMessageContent): TextChannel {
     val user = discordMessageContent.user
+    val messageTitle = discordMessageContent.title
     val message = discordMessageContent.message
+    val link = discordMessageContent.messageLink
 
     val channel = discordClient.getChannelOf<TextChannel>(discordMessageContent.channelId, EntitySupplyStrategy.cacheWithCachingRestFallback)
         ?: error("Invalid channel ID.")
@@ -176,18 +179,22 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     val channelName = channel.name
     val channelId = channel.id
 
-    logger.info("User: $user | Message: $message | Channel Name: $channelName | Channel ID: $channelId")
+    logger.info("User: $user | Title: $messageTitle | Message: $message | Link: $link | Channel Name: $channelName | Channel ID: $channelId")
 
     channel.createEmbed {
-        title = "Suggestion for $channelName"
+        title = messageTitle + channelName
         author {
             name = "Twitch user $user"
         }
-        description = discordMessageContent.message
+        description = message
         color = Color(233,166,35)
     }
 
-    logger.info("Embed on Discord Channel $channelName")
+    if(link.isNotEmpty()){
+        channel.createMessage(link)
+    }
+
+    logger.info("Embed/Message created on Discord Channel $channelName")
 
     return channel
 }

@@ -4,6 +4,7 @@ import com.github.twitch4j.common.events.domain.EventUser
 import commands.feedbackCommand
 import commands.gameSuggestionCommand
 import commands.helpCommand
+import commands.sendClipCommand
 import dev.kord.core.Kord
 import kotlin.time.Duration
 
@@ -23,5 +24,6 @@ data class CommandHandlerScope(
 val commands = listOf(
     helpCommand,
     feedbackCommand,
-    gameSuggestionCommand
+    gameSuggestionCommand,
+    sendClipCommand
 )

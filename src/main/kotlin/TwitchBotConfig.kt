@@ -16,4 +16,6 @@ object TwitchBotConfig {
     val arriveEmote: String = properties.getProperty("arrive_emote")
     val confirmEmote: String = properties.getProperty("confirm_emote")
     val rejectEmote: String = properties.getProperty("reject_emote")
+    val explanationEmote: String = properties.getProperty("explanation_emote")
+    val allowedLinks: List<String> = properties.getProperty("allowed_links").split(",")
 }
