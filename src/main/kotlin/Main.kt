@@ -29,6 +29,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
+import kotlin.random.Random
 import kotlin.system.exitProcess
 import kotlin.time.toJavaDuration
 
@@ -171,7 +172,6 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     val user = discordMessageContent.user
     val messageTitle = discordMessageContent.title
     val message = discordMessageContent.message
-    val link = discordMessageContent.messageLink
 
     val channel = discordClient.getChannelOf<TextChannel>(discordMessageContent.channelId, EntitySupplyStrategy.cacheWithCachingRestFallback)
         ?: error("Invalid channel ID.")
@@ -179,19 +179,22 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     val channelName = channel.name
     val channelId = channel.id
 
-    logger.info("User: $user | Title: $messageTitle | Message: $message | Link: $link | Channel Name: $channelName | Channel ID: $channelId")
+    logger.info("User: $user | Title: $messageTitle | Message/Link: $message | Channel Name: $channelName | Channel ID: $channelId")
 
     channel.createEmbed {
         title = messageTitle + channelName
         author {
             name = "Twitch user $user"
         }
-        description = message
-        color = Color(233,166,35)
+        description = when (message) {
+            is DiscordMessageContent.Message.FromLink -> ""
+            is DiscordMessageContent.Message.FromText -> message.text
+        }
+        color = DiscordBotConfig.embedAccentColor
     }
 
-    if(link.isNotEmpty()){
-        channel.createMessage(link)
+    if (message is DiscordMessageContent.Message.FromLink) {
+        channel.createMessage(message.link)
     }
 
     logger.info("Embed/Message created on Discord Channel $channelName")

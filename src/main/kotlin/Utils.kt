@@ -19,9 +19,13 @@ class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream
 }
 
 data class DiscordMessageContent (
-    val message: String,
-    val messageLink: String,
+    val message: Message,
     val title: String,
     val user: String,
     val channelId: Snowflake
-)
+) {
+    sealed interface Message {
+        data class FromText(val text: String) : Message
+        data class FromLink(val link: String) : Message
+    }
+}
