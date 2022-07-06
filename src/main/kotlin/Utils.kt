@@ -29,3 +29,9 @@ data class DiscordMessageContent (
         data class FromLink(val link: String) : Message
     }
 }
+
+@kotlinx.serialization.Serializable
+data class ClipInformation (
+    val name: String,
+    val played: Boolean = false
+)

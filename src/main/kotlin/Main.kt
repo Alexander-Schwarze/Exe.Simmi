@@ -40,6 +40,7 @@ val commandHandlerCoroutineScope = CoroutineScope(Dispatchers.IO)
 
 suspend fun main() = try {
     setupLogging()
+    setupClipPlayer()
 
     val discordToken = File("data/discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
