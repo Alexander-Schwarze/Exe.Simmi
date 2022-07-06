@@ -33,5 +33,5 @@ data class DiscordMessageContent (
 @kotlinx.serialization.Serializable
 data class ClipInformation (
     val name: String,
-    val played: Boolean = false
+    var played: Boolean = false
 )
