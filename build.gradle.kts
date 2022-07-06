@@ -18,6 +18,8 @@ repositories {
 }
 
 dependencies {
+    val ktorVersion = "2.0.0"
+
     implementation(compose.desktop.currentOs)
 
     implementation("org.slf4j:slf4j-simple:1.7.36")
@@ -25,7 +27,11 @@ dependencies {
     implementation("com.github.kwhat:jnativehook:2.2.2")
     implementation("com.github.twitch4j:twitch4j:1.10.0")
 
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.0")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-cio:$ktorVersion")
+    implementation("io.ktor:ktor-server-websockets:$ktorVersion")
+    implementation("io.ktor:ktor-server-html-builder:$ktorVersion")
 
     implementation("dev.kord:kord-core:0.8.0-M14")
 }

@@ -1,4 +1,8 @@
+import androidx.compose.material.*
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -17,6 +21,13 @@ import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import dev.kord.rest.builder.message.EmbedBuilder.Limits.title
+import io.ktor.server.cio.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.server.engine.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.application.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,6 +39,7 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatterBuilder
+import javax.sound.sampled.Clip
 import javax.swing.JOptionPane
 import kotlin.random.Random
 import kotlin.system.exitProcess
@@ -36,11 +48,16 @@ import kotlin.time.toJavaDuration
 
 val logger: Logger = LoggerFactory.getLogger("Bot")
 val commandHandlerCoroutineScope = CoroutineScope(Dispatchers.IO)
+var clipPlayer = ClipPlayer()
 
+private object State {
+    val scaffoldState = ScaffoldState(DrawerState(DrawerValue.Closed) { true }, SnackbarHostState())
+    val openSessions = mutableStateListOf<DefaultWebSocketServerSession>()
+}
 
 suspend fun main() = try {
     setupLogging()
-    setupClipPlayer()
+    clipPlayer.setupClipPlayer()
 
     val discordToken = File("data/discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
@@ -57,6 +74,11 @@ suspend fun main() = try {
     val twitchClient = setupTwitchBot(discordClient)
 
     application {
+        LaunchedEffect(Unit){
+            hostServer()
+        }
+        logger.info("Websocket hosted")
+
         DisposableEffect(Unit) {
             onDispose {
                 twitchClient.chat.sendMessage(TwitchBotConfig.channel, "Bot shutting down ${TwitchBotConfig.leaveEmote}")
@@ -65,11 +87,18 @@ suspend fun main() = try {
         }
 
         Window(
-            state = WindowState(size = DpSize(400.dp, 200.dp)),
+            state = WindowState(size = DpSize(500.dp, 800.dp)),
             title = "Exe.Simmi",
-            onCloseRequest = ::exitApplication
+            onCloseRequest = ::exitApplication,
+            icon = painterResource("icon.ico")
         ) {
-            App()
+            Scaffold(
+                scaffoldState = State.scaffoldState
+            ) {
+                App(
+                    scaffoldState = State.scaffoldState
+                )
+            }
         }
     }
 } catch (e: Throwable) {
@@ -201,6 +230,31 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     logger.info("Embed/Message created on Discord Channel $channelName")
 
     return channel
+}
+
+private fun hostServer() {
+    embeddedServer(CIO, port = ClipPlayerConfig.port) {
+        install(WebSockets)
+
+        routing {
+            clipOverlayPage()
+
+            webSocket("/socket") {
+                logger.info("Got new connection.")
+                State.openSessions.add(this)
+
+                try {
+                    @Suppress("ControlFlowWithEmptyBody")
+                    for (frame in incoming) {
+                        // ignore
+                    }
+                } finally {
+                    logger.info("User disconnected.")
+                    State.openSessions.remove(this)
+                }
+            }
+        }
+    }.start(wait = false)
 }
 
 private const val LOG_DIRECTORY = "logs"
