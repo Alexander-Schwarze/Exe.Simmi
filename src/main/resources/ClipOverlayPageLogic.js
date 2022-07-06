@@ -1,14 +1,19 @@
 window.onload = () => {
-    // TODO: Get port from Config file
-    const webSocket = new WebSocket('ws://localhost:12345/socket');
-    const overlay = document.querySelector('#overlay');
+    const webSocket = new WebSocket(`ws://localhost:${serverPort}/socket`);
+    const videoPlayer = document.querySelector('#video-player');
     const warning = document.querySelector('#warning');
+
+    videoPlayer.onended = () => {
+        webSocket.send('next video lol');
+    };
 
     webSocket.onopen = () => {
         warning.style.visibility = 'hidden';
+        webSocket.send('next video lol');
     };
 
-    webSocket.onmessage = event => {
+    webSocket.onmessage = message => {
+        videoPlayer.src = `/video/${message.data}`;
     };
 
     webSocket.onclose = webSocket.onerror = () => {

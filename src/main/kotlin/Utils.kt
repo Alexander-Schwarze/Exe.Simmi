@@ -1,4 +1,6 @@
 import dev.kord.common.entity.Snowflake
+import kotlinx.serialization.Serializable
+
 import java.io.OutputStream
 
 class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream() {
@@ -30,8 +32,8 @@ data class DiscordMessageContent (
     }
 }
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class ClipInformation (
     val name: String,
-    var played: Boolean = false
+    val played: Boolean
 )

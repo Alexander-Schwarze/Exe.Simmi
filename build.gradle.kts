@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    val ktorVersion = "2.0.0"
+    val ktorVersion = "2.0.2"
 
     implementation(compose.desktop.currentOs)
 

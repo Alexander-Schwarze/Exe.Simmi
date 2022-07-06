@@ -4,10 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.ScaffoldState
-import androidx.compose.material.SnackbarDuration
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -24,53 +21,56 @@ import java.awt.datatransfer.StringSelection
 import java.net.URI
 import kotlin.time.Duration.Companion.seconds
 
-val port = ClipPlayerConfig.port
 @Composable
 @Preview
-fun App(
-    scaffoldState: ScaffoldState
-) {
+fun App() {
     val coroutineScope = rememberCoroutineScope()
+    val scaffoldState = rememberScaffoldState()
 
-    Column(
-        modifier = Modifier
-            .padding(24.dp)
-            .fillMaxSize()
+    Scaffold(
+        scaffoldState = scaffoldState
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .padding(bottom = 24.dp)
+                .padding(24.dp)
+                .fillMaxSize()
         ) {
-            Text(
-                style = MaterialTheme.typography.body1,
-                text = "Clips hosted on "
-            )
-
-            Text(
-                style = MaterialTheme.typography.body1,
-                text = "localhost:$port",
+            Row(
                 modifier = Modifier
-                    .clickable {
-                        coroutineScope.launch {
-                            Toolkit.getDefaultToolkit().systemClipboard.setContents(
-                                StringSelection("http://localhost:$port"),
-                                null
-                            )
-                            scaffoldState.snackbarHostState.showSnackbar(
-                                message = "URL copied! Opening browser...",
-                                duration = SnackbarDuration.Short
-                            )
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    style = MaterialTheme.typography.body1,
+                    text = "Clips hosted on "
+                )
 
-                            delay(2.seconds)
+                Text(
+                    style = MaterialTheme.typography.body1,
+                    text = "http://localhost:${ClipPlayerConfig.port}",
+                    modifier = Modifier
+                        .clickable {
+                            coroutineScope.launch {
+                                Toolkit.getDefaultToolkit().systemClipboard.setContents(
+                                    StringSelection("http://localhost:${ClipPlayerConfig.port}"),
+                                    null
+                                )
 
-                            withContext(Dispatchers.IO) {
-                                Desktop.getDesktop().browse(URI.create("http://localhost:$port"))
+                                scaffoldState.snackbarHostState.showSnackbar(
+                                    message = "URL copied! Opening browser...",
+                                    duration = SnackbarDuration.Short
+                                )
+
+                                delay(2.seconds)
+
+                                withContext(Dispatchers.IO) {
+                                    Desktop.getDesktop().browse(URI.create("http://localhost:${ClipPlayerConfig.port}"))
+                                }
                             }
-                        }
-                    },
-                textDecoration = TextDecoration.Underline,
-                color = Color(0xff0b5b8e)
-            )
+                        },
+                    textDecoration = TextDecoration.Underline,
+                    color = Color(0xff0b5b8e)
+                )
+            }
         }
     }
 }

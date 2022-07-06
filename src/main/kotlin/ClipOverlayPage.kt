@@ -24,8 +24,9 @@ fun Route.clipOverlayPage() {
                     }
                 }
 
-                div {
-                    id = "overlay"
+                video {
+                    id = "video-player"
+                    autoPlay = true
                 }
 
                 div {
@@ -47,6 +48,14 @@ fun Route.clipOverlayPage() {
                     classes = setOf("hidden")
 
                     +"Disconnected. Please reload page."
+                }
+
+                script {
+                    unsafe {
+                        raw("""
+                            const serverPort = '${ClipPlayerConfig.port}';
+                        """.trimIndent())
+                    }
                 }
 
                 script {
