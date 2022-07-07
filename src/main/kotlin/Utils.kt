@@ -31,9 +31,3 @@ data class DiscordMessageContent (
         data class FromLink(val link: String) : Message
     }
 }
-
-@Serializable
-data class ClipInformation (
-    val name: String,
-    val played: Boolean
-)

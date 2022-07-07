@@ -1,4 +1,3 @@
-import androidx.compose.material.*
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.res.painterResource
@@ -21,7 +20,9 @@ import dev.kord.gateway.PrivilegedIntent
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.ktor.server.http.content.*
+import io.ktor.server.plugins.autohead.*
+import io.ktor.server.plugins.partialcontent.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -219,30 +220,24 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
 private fun hostServer() {
     embeddedServer(CIO, port = ClipPlayerConfig.port) {
         install(WebSockets)
+        install(PartialContent)
+        install(AutoHeadResponse)
 
         routing {
             clipOverlayPage()
 
             webSocket("/socket") {
+                val clipPlayerInstance = ClipPlayer.instance ?: run {
+                    close(CloseReason(CloseReason.Codes.INTERNAL_ERROR, "Clip player not setup."))
+                    return@webSocket
+                }
+
                 logger.info("Got new connection.")
                 State.openSessions.add(this)
 
                 try {
                     for (frame in incoming) {
-                        // TODO: Codereview
-                        val clips = ClipPlayer.instance?.clips
-                        if(clips?.filter { !it.played }?.size == 0){
-                            ClipPlayer.instance.resetPlaylistFile()
-                        }
-                        send(clips
-                            ?.filter{
-                                !it.played
-                            }
-                            ?.random()
-                            ?.also {
-                                // TODO: Set sent clip on played = true
-                            }
-                            ?.name.toString())
+                        send(clipPlayerInstance.popNextRandomClip())
                     }
                 } finally {
                     logger.info("User disconnected.")
@@ -250,8 +245,8 @@ private fun hostServer() {
                 }
             }
 
-            static("/video") {
-                files(ClipPlayerConfig.clipLocation)
+            get("/video/{name}") {
+                call.respondFile(Paths.get(ClipPlayerConfig.clipLocation, call.parameters["name"]).toFile())
             }
         }
     }.start(wait = false)

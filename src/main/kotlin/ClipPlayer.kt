@@ -3,7 +3,11 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-class ClipPlayer private constructor(clips: List<ClipInformation>, playListFile: File) {
+class ClipPlayer private constructor(
+    private val clips: List<String>,
+    playedClips: List<String>,
+    private val playListFile: File
+) {
     companion object {
         val instance = run {
             val clipDirectory = File(ClipPlayerConfig.clipLocation)
@@ -15,14 +19,14 @@ class ClipPlayer private constructor(clips: List<ClipInformation>, playListFile:
 
             val playListFile = File("data/currentClipPlaylist.json")
 
-            val clipsInCurrentPlaylist = playListFile.let { file ->
+            val playedClips = playListFile.let { file ->
                 if (!file.exists()) {
                     file.createNewFile()
                     logger.info("Playlist file created")
                     listOf()
                 } else {
-                    Json.decodeFromString<List<ClipInformation>>(file.readText()).also { currentPlaylistData ->
-                        logger.info("Existing playlist file found! Values: ${currentPlaylistData.joinToString(" | ") { "${it.name}: played = ${it.played}" }}")
+                    Json.decodeFromString<List<String>>(file.readText()).also { currentPlaylistData ->
+                        logger.info("Existing playlist file found! Values: ${currentPlaylistData.joinToString(" | ")}")
                     }
                 }
             }
@@ -31,12 +35,7 @@ class ClipPlayer private constructor(clips: List<ClipInformation>, playListFile:
                 .filter {
                     it.extension in ClipPlayerConfig.allowedVideoFiles
                 }
-                .map { clipFile ->
-                    ClipInformation(
-                        name = clipFile.name,
-                        played = clipsInCurrentPlaylist.any { clipFile.name == it.name }
-                    )
-                }
+                .map { it.name }
                 .toList()
 
             if (clips.isEmpty()) {
@@ -44,30 +43,29 @@ class ClipPlayer private constructor(clips: List<ClipInformation>, playListFile:
                 return@run null
             }
 
-            logger.info("Clips in folder ${ClipPlayerConfig.clipLocation} after applying playlist values: ${clips.joinToString(" | ") { "${it.name}: played = ${it.played}" }}")
+            logger.info("Clips in folder after applying playlist values ${ClipPlayerConfig.clipLocation} : ${clips.joinToString(" | ") { "$it: played = ${it in playedClips}" }}")
 
-            ClipPlayer(clips, playListFile)
+            ClipPlayer(clips, playedClips, playListFile)
         }
     }
 
-    var clips = clips
-        private set
+    private var unplayedClips = playedClips
+        private set(value) {
+            playListFile.writeText(Json.encodeToString(clips))
+            field = value
+        }
 
-    var playListFile = playListFile
-        private set
+    fun popNextRandomClip(): String {
+        if (unplayedClips.isEmpty()) {
+            resetPlaylistFile()
+        }
 
-    init {
-        updatePlaylistFile()
-    }
-    fun updatePlaylistFile(){
-        playListFile.writeText(Json.encodeToString(clips))
+        return unplayedClips.random().also {
+            unplayedClips = unplayedClips - it
+        }
     }
 
     fun resetPlaylistFile() {
-        clips.forEach{
-            // TODO: How? :(
-            // it.played = false
-        }
-        updatePlaylistFile()
+        unplayedClips = clips
     }
 }
