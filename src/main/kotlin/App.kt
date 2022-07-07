@@ -5,8 +5,11 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +37,7 @@ fun App() {
                 .fillMaxSize()
         ) {
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .padding(bottom = 24.dp)
             ) {
@@ -64,7 +68,9 @@ fun App() {
                                     Desktop.getDesktop().browse(URI.create("http://localhost:${ClipPlayerConfig.port}"))
                                 }
                             }
-                        },
+                        }
+                        .padding(3.dp)
+                        .pointerHoverIcon(PointerIconDefaults.Hand),
                     textDecoration = TextDecoration.Underline,
                     color = Color(0xff0b5b8e)
                 )

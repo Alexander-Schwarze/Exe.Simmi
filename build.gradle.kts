@@ -46,6 +46,7 @@ tasks.withType<KotlinCompile> {
         languageSettings.apply {
             optIn("kotlin.RequiresOptIn")
             optIn("kotlin.time.ExperimentalTime")
+            optIn("androidx.compose.ui.ExperimentalComposeUiApi")
         }
     }
 

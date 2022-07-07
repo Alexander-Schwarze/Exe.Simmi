@@ -68,7 +68,7 @@ suspend fun main() = try {
     val twitchClient = setupTwitchBot(discordClient)
 
     hostServer()
-    logger.info("Websocket hosted.")
+    logger.info("WebSocket hosted.")
 
     application {
         DisposableEffect(Unit) {
@@ -79,10 +79,11 @@ suspend fun main() = try {
         }
 
         Window(
-            state = WindowState(size = DpSize(500.dp, 300.dp)),
+            state = WindowState(size = DpSize(400.dp, 200.dp)),
             title = "Exe.Simmi",
             onCloseRequest = ::exitApplication,
-            icon = painterResource("icon.ico")
+            icon = painterResource("icon.ico"),
+            resizable = false
         ) {
             App()
         }
@@ -230,6 +231,7 @@ private fun hostServer() {
             webSocket("/socket") {
                 val clipPlayerInstance = ClipPlayer.instance ?: run {
                     close(CloseReason(CloseReason.Codes.INTERNAL_ERROR, "Clip player not setup."))
+                    logger.error("Clip player not setup.")
                     return@webSocket
                 }
 
@@ -245,10 +247,6 @@ private fun hostServer() {
                     State.openSessions.remove(this)
                 }
             }
-
-            /*get("/video/{name}") {
-                call.respondFile(Paths.get(ClipPlayerConfig.clipLocation, call.parameters["name"]).toFile())
-            }*/
 
             static("/video") {
                 files(ClipPlayerConfig.clipLocation)

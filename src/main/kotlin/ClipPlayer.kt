@@ -14,7 +14,7 @@ class ClipPlayer private constructor(
             val clipDirectory = File(ClipPlayerConfig.clipLocation)
 
             if (!clipDirectory.isDirectory) {
-                logger.error("Clip directory is nonexistent. Please make sure to give the right path.")
+                logger.error("Clip directory doesn't exist. Please make sure to use the correct path.")
                 return@run null
             }
 
@@ -36,7 +36,7 @@ class ClipPlayer private constructor(
                 .toSet()
 
             if (clips.isEmpty()) {
-                logger.error("No clips in folder ${ClipPlayerConfig.clipLocation}")
+                logger.error("No clips in folder ${ClipPlayerConfig.clipLocation}.")
                 return@run null
             }
 
@@ -67,5 +67,6 @@ class ClipPlayer private constructor(
 
     fun resetPlaylistFile() {
         playedClips = setOf()
+        logger.info("Reset Playlist")
     }
 }
