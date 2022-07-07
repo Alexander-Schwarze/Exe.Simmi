@@ -16,8 +16,10 @@ fun Route.clipOverlayPage() {
                     unsafe {
                         raw(
                             """
-                                #overlay {
+                                #video-player {
                                     position: absolute;
+                                    height: 100%;
+                                    width: 100%;
                                 }
                             """.trimIndent()
                         )

@@ -1,8 +1,9 @@
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 
-class ClipPlayer private constructor(clips: List<ClipInformation>) {
+class ClipPlayer private constructor(clips: List<ClipInformation>, playListFile: File) {
     companion object {
         val instance = run {
             val clipDirectory = File(ClipPlayerConfig.clipLocation)
@@ -12,14 +13,16 @@ class ClipPlayer private constructor(clips: List<ClipInformation>) {
                 return@run null
             }
 
-            val clipsInCurrentPlaylist = File("data/currentClipPlaylist.json").let { file ->
+            val playListFile = File("data/currentClipPlaylist.json")
+
+            val clipsInCurrentPlaylist = playListFile.let { file ->
                 if (!file.exists()) {
                     file.createNewFile()
                     logger.info("Playlist file created")
                     listOf()
                 } else {
                     Json.decodeFromString<List<ClipInformation>>(file.readText()).also { currentPlaylistData ->
-                        logger.info("Existing playlist file found! Read Data. ${currentPlaylistData.joinToString(" | ") { "${it.name}: played = ${it.played}" }}")
+                        logger.info("Existing playlist file found! Values: ${currentPlaylistData.joinToString(" | ") { "${it.name}: played = ${it.played}" }}")
                     }
                 }
             }
@@ -41,10 +44,30 @@ class ClipPlayer private constructor(clips: List<ClipInformation>) {
                 return@run null
             }
 
-            ClipPlayer(clips)
+            logger.info("Clips in folder ${ClipPlayerConfig.clipLocation} after applying playlist values: ${clips.joinToString(" | ") { "${it.name}: played = ${it.played}" }}")
+
+            ClipPlayer(clips, playListFile)
         }
     }
 
     var clips = clips
         private set
+
+    var playListFile = playListFile
+        private set
+
+    init {
+        updatePlaylistFile()
+    }
+    fun updatePlaylistFile(){
+        playListFile.writeText(Json.encodeToString(clips))
+    }
+
+    fun resetPlaylistFile() {
+        clips.forEach{
+            // TODO: How? :(
+            // it.played = false
+        }
+        updatePlaylistFile()
+    }
 }

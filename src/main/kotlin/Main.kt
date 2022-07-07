@@ -77,7 +77,7 @@ suspend fun main() = try {
         }
 
         Window(
-            state = WindowState(size = DpSize(500.dp, 800.dp)),
+            state = WindowState(size = DpSize(500.dp, 300.dp)),
             title = "Exe.Simmi",
             onCloseRequest = ::exitApplication,
             icon = painterResource("icon.ico")
@@ -229,7 +229,20 @@ private fun hostServer() {
 
                 try {
                     for (frame in incoming) {
-                        send(ClipPlayer.instance?.clips?.random()?.name.toString())
+                        // TODO: Codereview
+                        val clips = ClipPlayer.instance?.clips
+                        if(clips?.filter { !it.played }?.size == 0){
+                            ClipPlayer.instance.resetPlaylistFile()
+                        }
+                        send(clips
+                            ?.filter{
+                                !it.played
+                            }
+                            ?.random()
+                            ?.also {
+                                // TODO: Set sent clip on played = true
+                            }
+                            ?.name.toString())
                     }
                 } finally {
                     logger.info("User disconnected.")

@@ -1,9 +1,6 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -11,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import dev.kord.rest.ratelimit.Reset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,6 +68,51 @@ fun App() {
                     textDecoration = TextDecoration.Underline,
                     color = Color(0xff0b5b8e)
                 )
+            }
+
+            Row (
+                modifier = Modifier
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    // TODO: get currently playing clip name
+                    text = "Currently Playing: ..."
+                )
+            }
+
+            Row (
+                modifier = Modifier
+                    .padding(bottom = 6.dp)
+            ) {
+                Button(
+                    onClick = {
+                        // TODO: play and pause
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        /*
+                        when (overlayStatus) {
+                            is OverlayStatus.Running -> "Stop"
+                            is OverlayStatus.Stopped -> "Start"
+                        }
+                        */
+                        text = "Play / Pause"
+                    )
+                }
+            }
+
+            Row () {
+                Button(
+                    onClick = {
+                              ClipPlayer.instance?.resetPlaylistFile()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Reset Playlist"
+                    )
+                }
             }
         }
     }
