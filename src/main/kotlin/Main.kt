@@ -23,7 +23,6 @@ import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.partialcontent.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -32,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.awt.Desktop
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -79,7 +79,7 @@ suspend fun main() = try {
         }
 
         Window(
-            state = WindowState(size = DpSize(400.dp, 200.dp)),
+            state = WindowState(size = DpSize(500.dp, 250.dp)),
             title = "Exe.Simmi",
             onCloseRequest = ::exitApplication,
             icon = painterResource("icon.ico"),

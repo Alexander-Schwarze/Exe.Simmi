@@ -28,6 +28,7 @@ Before executing the program, you need a folder "data" on the same level as the 
 * clipPlayer.properties
   * clip_location=\<path to the directory with the clips, you can use a relative path (e.g. ..\\..\\clips\\folder) or the direct path (e.g. D:\\Files\\Videos\\clips\\folder). Just make sure to write double back slashes>
   * allowed_video_files=\<a list of video file types (without the dot, e.g. "mp4") that are allowed for the ClipPlayer, seperated by ",">
+  * port=\<the port the websocket will be working on. make sure to use an unusual port (e.g. 12345)>
 * twitchtoken.txt
     * The only content: twitch bot account token
 * discordtoken.txt

@@ -15,6 +15,7 @@ window.onload = () => {
 
     webSocket.onmessage = message => {
         videoPlayer.src = `/video/${message.data}`;
+        videoPlayer.play();
     };
 
     webSocket.onclose = webSocket.onerror = () => {

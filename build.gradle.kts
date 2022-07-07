@@ -7,7 +7,7 @@ plugins {
 
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
-    id("org.jetbrains.compose") version "1.1.0"
+    id("org.jetbrains.compose") version "1.1.1"
 }
 
 group = "alex.exe.simmi"
@@ -28,6 +28,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     implementation("com.github.kwhat:jnativehook:2.2.2")
     implementation("com.github.twitch4j:twitch4j:1.10.0")
+    implementation("com.github.tkuenneth:nativeparameterstoreaccess:0.1.0")
 
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("io.ktor:ktor-server-core:$ktorVersion")

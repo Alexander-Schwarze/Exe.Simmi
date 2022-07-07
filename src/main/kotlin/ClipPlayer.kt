@@ -30,7 +30,7 @@ class ClipPlayer private constructor(
                 }
             }
 
-            val clips = clipDirectory.walk()
+            val clips = clipDirectory.listFiles()!!
                 .filter { it.extension in ClipPlayerConfig.allowedVideoFiles }
                 .map { it.name }
                 .toSet()
@@ -67,6 +67,6 @@ class ClipPlayer private constructor(
 
     fun resetPlaylistFile() {
         playedClips = setOf()
-        logger.info("Reset Playlist")
+        logger.info("Resetting playlist...")
     }
 }
