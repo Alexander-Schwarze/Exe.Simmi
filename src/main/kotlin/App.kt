@@ -3,12 +3,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import dev.kord.rest.ratelimit.Reset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -70,42 +70,19 @@ fun App() {
                 )
             }
 
-            Row (
+            Row(
                 modifier = Modifier
-                    .padding(bottom = 24.dp)
+                    .padding(bottom = 8.dp)
             ) {
                 Text(
-                    // TODO: get currently playing clip name
-                    text = "Currently Playing: ..."
+                    text = "Currently Playing: ${ClipPlayer.instance?.currentlyPlayingClip?.collectAsState()?.value ?: "Nothing"}"
                 )
             }
 
-            Row (
-                modifier = Modifier
-                    .padding(bottom = 6.dp)
-            ) {
+            Row {
                 Button(
                     onClick = {
-                        // TODO: play and pause
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        /*
-                        when (overlayStatus) {
-                            is OverlayStatus.Running -> "Stop"
-                            is OverlayStatus.Stopped -> "Start"
-                        }
-                        */
-                        text = "Play / Pause"
-                    )
-                }
-            }
-
-            Row () {
-                Button(
-                    onClick = {
-                              ClipPlayer.instance?.resetPlaylistFile()
+                        ClipPlayer.instance?.resetPlaylistFile()
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {

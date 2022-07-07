@@ -29,6 +29,12 @@ fun Route.clipOverlayPage() {
                 video {
                     id = "video-player"
                     autoPlay = true
+
+                    style = """
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                    """.trimIndent()
                 }
 
                 div {

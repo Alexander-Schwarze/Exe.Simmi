@@ -26,7 +26,7 @@ Before executing the program, you need a folder "data" on the same level as the 
   * clip_channel_id=\<discord channel id for the clip channel>
   * embed_accent_color=\<color for the discord embed accent in HEX (with "#" in front)>
 * clipPlayer.properties
-  * clip_location=\<path to the directory with the clips, you can use a relative path (e.g. ../../clips/folder) or the direct path (e.g. D:/Files/Videos/clips/folder). Just make sure to replace back slashes with slashes>
+  * clip_location=\<path to the directory with the clips, you can use a relative path (e.g. ..\\..\\clips\\folder) or the direct path (e.g. D:\\Files\\Videos\\clips\\folder). Just make sure to write double back slashes>
   * allowed_video_files=\<a list of video file types (without the dot, e.g. "mp4") that are allowed for the ClipPlayer, seperated by ",">
 * twitchtoken.txt
     * The only content: twitch bot account token

@@ -20,6 +20,7 @@ import dev.kord.gateway.PrivilegedIntent
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
 import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.response.*
@@ -245,8 +246,12 @@ private fun hostServer() {
                 }
             }
 
-            get("/video/{name}") {
+            /*get("/video/{name}") {
                 call.respondFile(Paths.get(ClipPlayerConfig.clipLocation, call.parameters["name"]).toFile())
+            }*/
+
+            static("/video") {
+                files(ClipPlayerConfig.clipLocation)
             }
         }
     }.start(wait = false)
