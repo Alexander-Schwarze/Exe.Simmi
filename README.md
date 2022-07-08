@@ -36,4 +36,5 @@ Before executing the program, you need a folder "data" on the same level as the 
 
 Just replace the stuff in <> with the value described.
 
-
+### Info for using the clip-player feature:
+While the app is running, do not add/delete videos from the folder. If you want to change the clips, make sure to turn off the app and then turn on again as soon as you are done. Also do not adjust the playlist file. If you wish to reset it (though there is the button on the app for it), just delete it and start up the app again.

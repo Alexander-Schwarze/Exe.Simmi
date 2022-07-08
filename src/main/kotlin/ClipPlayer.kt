@@ -55,7 +55,7 @@ class ClipPlayer private constructor(
         }
 
     fun popNextRandomClip(): String {
-        if (playedClips == clips) {
+        if (playedClips.size >= clips.size) {
             resetPlaylistFile()
         }
 
