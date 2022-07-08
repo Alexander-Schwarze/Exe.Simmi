@@ -5,6 +5,7 @@ window.onload = () => {
 
 
     videoPlayer.onended = () => {
+        console.log('Video done, requesting next one...');
         webSocket.send('next video lol');
     };
 
@@ -14,11 +15,13 @@ window.onload = () => {
     };
 
     webSocket.onmessage = message => {
+        console.log(`Received next video "${message.data}".`);
         videoPlayer.src = `/video/${message.data}`;
         videoPlayer.play();
     };
 
-    webSocket.onclose = webSocket.onerror = () => {
+    webSocket.onclose = webSocket.onerror = e => {
+        console.error('WebSocket was closed:', e);
         warning.style.visibility = 'visible';
     };
 };

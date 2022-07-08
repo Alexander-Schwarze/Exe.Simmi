@@ -25,7 +25,7 @@ class ClipPlayer private constructor(
                 logger.info("Playlist file created.")
                 setOf()
             } else {
-                Json.decodeFromString<Set<String>>(playListFile.readText()).also { currentPlaylistData ->
+                json.decodeFromString<Set<String>>(playListFile.readText()).also { currentPlaylistData ->
                     logger.info("Existing playlist file found! Values: ${currentPlaylistData.joinToString(" | ")}")
                 }
             }
@@ -51,13 +51,17 @@ class ClipPlayer private constructor(
     private var playedClips = playedClips
         private set(value) {
             field = value
-            playListFile.writeText(Json.encodeToString(field))
+            playListFile.writeText(json.encodeToString(field))
         }
 
     fun popNextRandomClip(): String {
         if (playedClips == clips) {
             resetPlaylistFile()
         }
+
+        logger.debug(playedClips.toString())
+        logger.debug(clips.toString())
+        logger.debug(clips.filter { it !in playedClips }.toString())
 
         return clips.filter { it !in playedClips }.random().also {
             playedClips = playedClips + it

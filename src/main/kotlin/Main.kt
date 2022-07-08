@@ -21,6 +21,7 @@ import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.routing.*
@@ -29,6 +30,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.awt.Desktop
@@ -45,6 +47,10 @@ import kotlin.time.toJavaDuration
 
 val logger: Logger = LoggerFactory.getLogger("Bot")
 val commandHandlerCoroutineScope = CoroutineScope(Dispatchers.IO)
+
+val json = Json {
+    prettyPrint = true
+}
 
 private object State {
     val openSessions = mutableStateListOf<DefaultWebSocketServerSession>()
@@ -240,7 +246,10 @@ private fun hostServer() {
 
                 try {
                     for (frame in incoming) {
-                        send(clipPlayerInstance.popNextRandomClip())
+                        clipPlayerInstance.popNextRandomClip().let {
+                            send(it)
+                            logger.debug("Received video request from '${call.request.origin.remoteHost}', sending video '$it'.")
+                        }
                     }
                 } finally {
                     logger.info("User disconnected.")
