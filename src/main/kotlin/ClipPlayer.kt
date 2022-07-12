@@ -63,10 +63,6 @@ class ClipPlayer private constructor(
             resetPlaylistFile()
         }
 
-        logger.debug(playedClips.toString())
-        logger.debug(clips.toString())
-        logger.debug(clips.filter { it !in playedClips }.toString())
-
         return clips.filter { it !in playedClips }.random().also {
             playedClips = playedClips + it
             currentlyPlayingClip.value = it
