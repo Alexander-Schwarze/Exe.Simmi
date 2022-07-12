@@ -25,8 +25,13 @@ class ClipPlayer private constructor(
                 logger.info("Playlist file created.")
                 setOf()
             } else {
-                json.decodeFromString<Set<String>>(playListFile.readText()).also { currentPlaylistData ->
-                    logger.info("Existing playlist file found! Values: ${currentPlaylistData.joinToString(" | ")}")
+                try {
+                    json.decodeFromString<Set<String>>(playListFile.readText()).also { currentPlaylistData ->
+                        logger.info("Existing playlist file found! Values: ${currentPlaylistData.joinToString(" | ")}")
+                    }
+                } catch (e: Exception) {
+                    logger.warn("Error while reading playlist file. Initializing empty playlist", e)
+                    setOf()
                 }
             }
 
