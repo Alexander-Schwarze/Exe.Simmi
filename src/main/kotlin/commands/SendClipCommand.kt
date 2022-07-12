@@ -1,13 +1,13 @@
 package commands
 
-import TwitchBotConfig
 import Command
+import DiscordBotConfig
 import DiscordMessageContent
+import TwitchBotConfig
 import TwitchBotConfig.explanationEmote
-import dev.kord.rest.builder.message.EmbedBuilder.Limits.title
+import logger
 import sendMessageToDiscordBot
 import kotlin.time.Duration.Companion.seconds
-import logger
 
 val sendClipCommand: Command = Command(
     names = listOf("sc", "sendclip"),

@@ -1,7 +1,7 @@
 package commands
 
-import TwitchBotConfig
 import Command
+import TwitchBotConfig
 import commands
 
 val helpCommand: Command = Command(

@@ -1,6 +1,4 @@
 import dev.kord.common.entity.Snowflake
-import kotlinx.serialization.Serializable
-
 import java.io.OutputStream
 
 class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream() {
