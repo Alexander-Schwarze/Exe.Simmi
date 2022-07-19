@@ -10,7 +10,7 @@ import sendMessageToDiscordBot
 import kotlin.time.Duration.Companion.seconds
 
 val sendClipCommand: Command = Command(
-    names = listOf("sc", "sendclip"),
+    names = listOf("sc", "sendclip", "clip", "clips"),
     handler = { arguments ->
         val link = arguments.findLast { argument ->
             TwitchBotConfig.allowedDomains.any {

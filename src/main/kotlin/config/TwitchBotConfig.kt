@@ -18,4 +18,6 @@ object TwitchBotConfig {
     val rejectEmote: String = properties.getProperty("reject_emote")
     val explanationEmote: String = properties.getProperty("explanation_emote")
     val allowedDomains: List<String> = properties.getProperty("allowed_domains").split(",")
+    val blacklistedUsers: List<String> = properties.getProperty("blacklisted_users").split(",")
+    val blacklistEmote: String = properties.getProperty("blacklist_emote")
 }

@@ -126,6 +126,16 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
         val parts = message.substringAfter(TwitchBotConfig.commandPrefix).split(" ")
         val command = commands.find { parts.first().lowercase() in it.names } ?: return@onEvent
 
+        // This feature has been built because of ShardZero abusing bot features. The bot will not allow commands from blacklisted users
+        if(messageEvent.user.name in TwitchBotConfig.blacklistedUsers || messageEvent.user.id in TwitchBotConfig.blacklistedUsers){
+            twitchClient.chat.sendMessage(
+                TwitchBotConfig.channel,
+                "Imagine not being a blacklisted user. Couldn't be you ${messageEvent.user.name} ${TwitchBotConfig.blacklistEmote}"
+            )
+            logger.warn("Blacklisted user ${messageEvent.user.name} tried using a command. Please use following ID in the properties file instead of the name, if not done yet... ID: ${messageEvent.user.id}")
+            return@onEvent
+        }
+
         if (TwitchBotConfig.onlyMods && CommandPermission.MODERATOR !in messageEvent.permissions) {
             twitchClient.chat.sendMessage(
                 TwitchBotConfig.channel,
