@@ -22,7 +22,7 @@ Before executing the program, you need a folder "data" on the same level as the 
     * allowed_domains=\<a list of domains (without http or https, e.g. "clips.twitch.tv/") that are allowed for the SendClipCommand, seperated by ",">
     * blacklisted_users=\<a list of blacklisted users, separated by ",". You can use Twitch names or IDs, but IDs are better. The bot will log a warning containing the users ID so you can paste it in>
     * blacklist_emote=\<twitch emote that appears when the bot messages a blacklisted user>
-* twitchBotConfig.properties
+* discordBotConfig.properties
   * feedback_channel_id=\<discord channel id for the feedback channel>
   * game_channel_id=\<discord channel id for the game channel>
   * clip_channel_id=\<discord channel id for the clip channel>
