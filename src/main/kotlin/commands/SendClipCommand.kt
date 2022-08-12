@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 val sendClipCommand: Command = Command(
     names = listOf("sc", "sendclip", "clip", "clips"),
     handler = { arguments ->
-        val link = arguments.findLast { argument ->
+        var link = arguments.filter { it.contains("https:") }.findLast { argument ->
             TwitchBotConfig.allowedDomains.any {
                 argument.substringAfter("://").startsWith(it)
             }
@@ -22,11 +22,13 @@ val sendClipCommand: Command = Command(
                 "Following link types are allowed: " +
                 TwitchBotConfig.allowedDomains.map { "'${it}'" }.let { links ->
                     listOf(links.dropLast(1).joinToString(), links.last()).filter { it.isNotBlank() }.joinToString(" and ")
-                } + " $explanationEmote"
+                } + ". Make sure, that your link starts with \"https://\" $explanationEmote"
             )
             addedUserCooldown = 5.seconds
             return@Command
         }
+
+        link = link.substring(link.indexOf("https:"))
 
         val currentMessageContent = DiscordMessageContent(
             message = DiscordMessageContent.Message.FromLink(link),
