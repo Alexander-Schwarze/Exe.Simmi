@@ -21,7 +21,7 @@ val gameSuggestionCommand: Command = Command(
         val currentMessageContent = DiscordMessageContent(
             message = DiscordMessageContent.Message.FromText(message),
             title = "Suggestion for ",
-            user = user.name,
+            user = messageEvent.user.name,
             channelId = DiscordBotConfig.gameChannelId
         )
 

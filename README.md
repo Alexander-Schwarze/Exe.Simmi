@@ -7,7 +7,7 @@ Click on this [Link](https://discord.com/oauth2/authorize?client_id=990734200766
 ## Setup
 To setup the bot, you need to build the repository to an executable (jar, exe, ...).<br>
 
-Before executing the program, you need a folder "data" on the same level as the executable with following content:
+Before executing the program, you need a folder "data" on the same level as the executable with following files and their contents:
 * twitchBotConfig.properties
     * channel=\<channel_name>
     * only_mods=\<true/false>
@@ -19,16 +19,19 @@ Before executing the program, you need a folder "data" on the same level as the 
     * confirm_emote=\<twitch emote that appears when the bot confirms a command>
     * reject_emote=\<twitch emote that appears when the bot denies a command>
     * explanation_emote=\<twitch emote that appears when the bot explains>
-    * allowed_domains=\<a list of domains (without http or https, e.g. "clips.twitch.tv/") that are allowed for the SendClipCommand, seperated by ",">
-    * blacklisted_users=\<a list of blacklisted users, separated by ",". You can use Twitch names or IDs, but IDs are better. The bot will log a warning containing the users ID so you can paste it in>
+    * allowed_domains=\<a list of domains (without http or https, e.g. "clips.twitch.tv/") that are allowed for the SendClipCommand, separated by ",">
+    * blacklisted_users=\<a list of blacklisted users, separated by ",">
     * blacklist_emote=\<twitch emote that appears when the bot messages a blacklisted user>
+    * remind_command_users=\<a list of users that are allowed to use the remind-command, separated by ",">  
+    * remind_emote=\<twitch emote that appears when the remind-message appears>
+    * remind_emote_fail=\<twitch emote that appears when the user has not given a remind-message>
 * discordBotConfig.properties
   * feedback_channel_id=\<discord channel id for the feedback channel>
   * game_channel_id=\<discord channel id for the game channel>
   * clip_channel_id=\<discord channel id for the clip channel>
-  * embed_accent_color=\<color for the discord embed accent in HEX (with "#" in front)>
+  * embed_accent_color=\<color for the discord embed accent in HEX (with "#" at the beginning)>
 * clipPlayer.properties
-  * clip_location=\<path to the directory with the clips, you can use a relative path (e.g. ..\\..\\clips\\folder) or the direct path (e.g. D:\\Files\\Videos\\clips\\folder). Just make sure to write double back slashes>
+  * clip_location=\<path to the directory with the clips, you can use a relative path (e.g. ..\\..\\clips\\folder) or the direct path (e.g. D:\\Files\\Videos\\clips\\folder)>
   * allowed_video_files=\<a list of video file types (without the dot, e.g. "mp4") that are allowed for the ClipPlayer, seperated by ",">
   * port=\<the port the websocket will be working on. make sure to use an unusual port (e.g. 12345)>
 * twitchtoken.txt
@@ -40,3 +43,8 @@ Just replace the stuff in <> with the value described.
 
 ### Info for using the clip-player feature:
 While the app is running, do not add/delete videos from the folder. If you want to change the clips, make sure to turn off the app and then turn on again as soon as you are done. Also do not adjust the playlist file. If you wish to reset it (though there is the button on the app for it), just delete it and start up the app again.
+
+### Info for certain properties:
+  * twitchBotConfig.properties - remind_command_users: Keep in mind that you need to explicitly name all users that are allowed to use that command. This includes the broadcaster and mods.
+  * User lists: When you use a list of users (e.g. for the blacklist feature), you can write down their name in the properties file. Just keep in mind that they can easily change their name, which means it is better to use their IDs instead. For that the bot will issue a warning that contains the user's ID. Read the log-file to gather that information.
+  * Paths: When you need to write down a path (e.g. for the property clipPlayer.properties - clip_location), make sure to use double backslashes (e.g. D:\\Files\\Videos\\).

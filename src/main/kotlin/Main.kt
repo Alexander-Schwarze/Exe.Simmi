@@ -29,6 +29,7 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
@@ -41,6 +42,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 
@@ -132,7 +134,9 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
                 TwitchBotConfig.channel,
                 "Imagine not being a blacklisted user. Couldn't be you ${messageEvent.user.name} ${TwitchBotConfig.blacklistEmote}"
             )
-            logger.warn("Blacklisted user ${messageEvent.user.name} tried using a command. Please use following ID in the properties file instead of the name, if not done yet... ID: ${messageEvent.user.id}")
+            if(messageEvent.user.id !in TwitchBotConfig.remindCommandUsers) {
+                logger.warn("Blacklisted user ${messageEvent.user.name} tried using a command. Please use following ID in the properties file instead of the name: ${messageEvent.user.id}")
+            }
             return@onEvent
         }
 
@@ -183,7 +187,7 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
         val commandHandlerScope = CommandHandlerScope(
             discordClient = discordClient,
             chat = twitchClient.chat,
-            user = messageEvent.user
+            messageEvent = messageEvent
         )
 
         commandHandlerCoroutineScope.launch {
@@ -232,6 +236,19 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     logger.info("Embed/Message created on Discord Channel $channelName")
 
     return channel
+}
+
+fun CommandHandlerScope.startRemindInterval(intervalTime: Long, remindMessage: String){
+    CoroutineScope(Dispatchers.IO).launch {
+        delay(intervalTime.seconds)
+
+        val message = "${TwitchBotConfig.remindEmote} Time's up ${TwitchBotConfig.remindEmote} Reminder for: " + if (remindMessage.isEmpty()){
+            "I don't know. Something I guess? ${messageEvent.user.name} did not say for what ${TwitchBotConfig.remindEmoteFail}"
+        } else {
+            remindMessage
+        }
+        chat.sendMessage(TwitchBotConfig.channel, message)
+    }
 }
 
 private fun hostServer() {

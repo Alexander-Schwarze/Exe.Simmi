@@ -1,3 +1,4 @@
+import androidx.compose.ui.text.toLowerCase
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
@@ -18,6 +19,9 @@ object TwitchBotConfig {
     val rejectEmote: String = properties.getProperty("reject_emote")
     val explanationEmote: String = properties.getProperty("explanation_emote")
     val allowedDomains: List<String> = properties.getProperty("allowed_domains").split(",")
-    val blacklistedUsers: List<String> = properties.getProperty("blacklisted_users").split(",")
+    val blacklistedUsers: List<String> = properties.getProperty("blacklisted_users").lowercase(Locale.getDefault()).split(",")
     val blacklistEmote: String = properties.getProperty("blacklist_emote")
+    val remindCommandUsers: List<String> = properties.getProperty("remind_command_users").lowercase(Locale.getDefault()).split(",")
+    val remindEmote: String = properties.getProperty("remind_emote")
+    val remindEmoteFail: String = properties.getProperty("remind_emote_fail")
 }

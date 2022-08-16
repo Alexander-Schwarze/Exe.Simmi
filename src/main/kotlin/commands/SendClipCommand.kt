@@ -33,7 +33,7 @@ val sendClipCommand: Command = Command(
         val currentMessageContent = DiscordMessageContent(
             message = DiscordMessageContent.Message.FromLink(link),
             title = "Clip for ",
-            user = user.name,
+            user = messageEvent.user.name,
             channelId = DiscordBotConfig.clipChannelId
         )
 
