@@ -3,8 +3,8 @@ package commands
 import Command
 import DiscordBotConfig
 import DiscordMessageContent
-import TwitchBotConfig
-import TwitchBotConfig.explanationEmote
+import config.TwitchBotConfig
+import config.TwitchBotConfig.explanationEmote
 import logger
 import sendMessageToDiscordBot
 import kotlin.time.Duration.Companion.seconds
@@ -17,7 +17,8 @@ val sendClipCommand: Command = Command(
                 argument.substringAfter("://").startsWith(it)
             }
         } ?: run {
-            chat.sendMessage(TwitchBotConfig.channel,
+            chat.sendMessage(
+                TwitchBotConfig.channel,
                 "No link has been provided ${TwitchBotConfig.rejectEmote} " +
                 "Following link types are allowed: " +
                 TwitchBotConfig.allowedDomains.map { "'${it}'" }.let { links ->

@@ -1,4 +1,5 @@
-import androidx.compose.ui.text.toLowerCase
+package config
+
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.seconds

@@ -3,7 +3,7 @@ package commands
 import Command
 import DiscordBotConfig
 import DiscordMessageContent
-import TwitchBotConfig
+import config.TwitchBotConfig
 import logger
 import sendMessageToDiscordBot
 import kotlin.time.Duration.Companion.seconds

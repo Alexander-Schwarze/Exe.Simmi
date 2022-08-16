@@ -11,6 +11,7 @@ import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
+import config.TwitchBotConfig
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.createEmbed
 import dev.kord.core.entity.channel.TextChannel
@@ -31,23 +32,23 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toJavaInstant
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.time.Duration
-import java.time.Instant
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
+import kotlin.time.Duration
 
 
 val logger: Logger = LoggerFactory.getLogger("Bot")
-val commandHandlerCoroutineScope = CoroutineScope(Dispatchers.IO)
+val backgroundCoroutineScope = CoroutineScope(Dispatchers.IO)
 
 val json = Json {
     prettyPrint = true
@@ -153,31 +154,31 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
         logger.info("User '${messageEvent.user.name}' tried using command '${command.names.first()}' with arguments: ${parts.drop(1).joinToString()}")
 
         val nextAllowedCommandUsageInstant = nextAllowedCommandUsageInstantPerUser.getOrPut(command to messageEvent.user.name) {
-            Instant.now()
+            Clock.System.now()
         }
 
         val nextAllowedGlobalCommandUsageInstant = nextAllowedCommandUsageInstantPerCommand.getOrPut(command) {
-            Instant.now()
+            Clock.System.now()
         }
 
-        if (Instant.now().isBefore(nextAllowedGlobalCommandUsageInstant) && CommandPermission.MODERATOR !in messageEvent.permissions) {
-            val secondsUntilTimeoutOver = Duration.between(Instant.now(), nextAllowedGlobalCommandUsageInstant).seconds
+        if ((Clock.System.now() - nextAllowedGlobalCommandUsageInstant).isNegative() && CommandPermission.MODERATOR !in messageEvent.permissions) {
+            val secondsUntilTimeoutOver = nextAllowedGlobalCommandUsageInstant - Clock.System.now()
 
             twitchClient.chat.sendMessage(
                 TwitchBotConfig.channel,
-                "The command is still on cooldown. Please try again in $secondsUntilTimeoutOver seconds."
+                "The command is still on cooldown. Please try again in $secondsUntilTimeoutOver."
             )
             logger.info("Unable to execute command due to ongoing command cooldown.")
 
             return@onEvent
         }
 
-        if (Instant.now().isBefore(nextAllowedCommandUsageInstant) && CommandPermission.MODERATOR !in messageEvent.permissions) {
-            val secondsUntilTimeoutOver = Duration.between(Instant.now(), nextAllowedCommandUsageInstant).seconds
+        if ((Clock.System.now() - nextAllowedCommandUsageInstant).isNegative() && CommandPermission.MODERATOR !in messageEvent.permissions) {
+            val secondsUntilTimeoutOver = nextAllowedCommandUsageInstant - Clock.System.now()
 
             twitchClient.chat.sendMessage(
                 TwitchBotConfig.channel,
-                "You are still on cooldown. Please try again in $secondsUntilTimeoutOver seconds."
+                "You are still on cooldown. Please try again in $secondsUntilTimeoutOver."
             )
             logger.info("Unable to execute command due to ongoing user cooldown.")
 
@@ -190,13 +191,13 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
             messageEvent = messageEvent
         )
 
-        commandHandlerCoroutineScope.launch {
+        backgroundCoroutineScope.launch {
             command.handler(commandHandlerScope, parts.drop(1))
 
             val key = command to messageEvent.user.name
-            nextAllowedCommandUsageInstantPerUser[key] = nextAllowedCommandUsageInstantPerUser[key]!!.plus(commandHandlerScope.addedUserCooldown.toJavaDuration())
+            nextAllowedCommandUsageInstantPerUser[key] = nextAllowedCommandUsageInstantPerUser[key]!! + commandHandlerScope.addedUserCooldown
 
-            nextAllowedCommandUsageInstantPerCommand[command] = nextAllowedCommandUsageInstantPerCommand[command]!!.plus(commandHandlerScope.addedCommandCooldown.toJavaDuration())
+            nextAllowedCommandUsageInstantPerCommand[command] = nextAllowedCommandUsageInstantPerCommand[command]!! + commandHandlerScope.addedCommandCooldown
         }
     }
 
@@ -238,15 +239,14 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     return channel
 }
 
-fun CommandHandlerScope.startRemindInterval(intervalTime: Long, remindMessage: String){
-    CoroutineScope(Dispatchers.IO).launch {
-        delay(intervalTime.seconds)
+fun CommandHandlerScope.startRemindInterval(intervalTime: Duration, remindMessage: String) {
+    backgroundCoroutineScope.launch {
+        delay(intervalTime)
 
-        val message = "${TwitchBotConfig.remindEmote} Time's up ${TwitchBotConfig.remindEmote} Reminder for: " + if (remindMessage.isEmpty()){
+        val message = "${TwitchBotConfig.remindEmote} Time's up ${TwitchBotConfig.remindEmote} Reminder for: " + remindMessage.ifEmpty {
             "I don't know. Something I guess? ${messageEvent.user.name} did not say for what ${TwitchBotConfig.remindEmoteFail}"
-        } else {
-            remindMessage
         }
+
         chat.sendMessage(TwitchBotConfig.channel, message)
     }
 }
@@ -298,7 +298,7 @@ fun setupLogging() {
     val logFileName = DateTimeFormatterBuilder()
         .appendInstant(0)
         .toFormatter()
-        .format(Instant.now())
+        .format(Clock.System.now().toJavaInstant())
         .replace(':', '-')
 
     val logFile = Paths.get(LOG_DIRECTORY, "${logFileName}.log").toFile().also {
