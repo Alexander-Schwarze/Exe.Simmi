@@ -19,6 +19,12 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
+tasks.processResources {
+    filesMatching("buildinfo.properties") {
+        expand(project.properties)
+    }
+}
+
 dependencies {
     val ktorVersion = "2.0.2"
 
