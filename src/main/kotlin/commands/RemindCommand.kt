@@ -33,7 +33,7 @@ val remindCommand: Command = Command(
             0.minutes
         }
 
-        if (intervalTime.isPositive()) {
+        if (intervalTime.inWholeMilliseconds <= 0) {
             chat.sendMessage(TwitchBotConfig.channel, "Invalid interval time. It must be greater than zero!")
             addedUserCooldown = 5.seconds
             return@Command
@@ -42,7 +42,7 @@ val remindCommand: Command = Command(
         addedUserCooldown = TwitchBotConfig.userCooldown
         addedCommandCooldown = TwitchBotConfig.commandCooldown
 
-        chat.sendMessage(TwitchBotConfig.channel, TwitchBotConfig.explanationEmote)
+        chat.sendMessage(TwitchBotConfig.channel, "${TwitchBotConfig.explanationEmote} You will be reminded in $intervalTime")
         startRemindInterval(intervalTime, arguments.drop(1).joinToString(" "))
     }
 )
