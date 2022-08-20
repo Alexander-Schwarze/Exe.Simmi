@@ -135,7 +135,7 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
                 TwitchBotConfig.channel,
                 "Imagine not being a blacklisted user. Couldn't be you ${messageEvent.user.name} ${TwitchBotConfig.blacklistEmote}"
             )
-            if(messageEvent.user.id !in TwitchBotConfig.remindCommandUsers) {
+            if(messageEvent.user.id !in TwitchBotConfig.blacklistedUsers) {
                 logger.warn("Blacklisted user ${messageEvent.user.name} tried using a command. Please use following ID in the properties file instead of the name: ${messageEvent.user.id}")
             }
             return@onEvent
