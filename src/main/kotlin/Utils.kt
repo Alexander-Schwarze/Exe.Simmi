@@ -1,4 +1,5 @@
 import dev.kord.common.entity.Snowflake
+import kotlinx.datetime.Instant
 import java.io.OutputStream
 
 class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream() {
@@ -29,3 +30,9 @@ data class DiscordMessageContent (
         data class FromLink(val link: String) : Message
     }
 }
+
+@kotlinx.serialization.Serializable
+data class Reminder (
+    val message: String,
+    val timestampDue: Instant
+)

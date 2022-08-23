@@ -75,6 +75,11 @@ suspend fun main() = try {
 
     val twitchClient = setupTwitchBot(discordClient)
 
+    // TODO: This probably needs to get refactored
+    RemindHandler.setupReminders()
+    RemindHandler.chat = twitchClient.chat
+    RemindHandler.checkForReminds()
+
     hostServer()
     logger.info("WebSocket hosted.")
 
@@ -237,18 +242,6 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     logger.info("Embed/Message created on Discord Channel $channelName")
 
     return channel
-}
-
-fun CommandHandlerScope.startRemindInterval(intervalTime: Duration, remindMessage: String) {
-    backgroundCoroutineScope.launch {
-        delay(intervalTime)
-
-        val message = "${TwitchBotConfig.remindEmote} Time's up ${TwitchBotConfig.remindEmote} Reminder for: " + remindMessage.ifEmpty {
-            "I don't know. Something I guess? ${messageEvent.user.name} did not say for what ${TwitchBotConfig.remindEmoteFail}"
-        }
-
-        chat.sendMessage(TwitchBotConfig.channel, message)
-    }
 }
 
 private fun hostServer() {
