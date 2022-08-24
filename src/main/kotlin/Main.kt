@@ -1,5 +1,4 @@
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -30,7 +29,6 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -44,18 +42,12 @@ import java.nio.file.Paths
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
-import kotlin.time.Duration
 
 
 val logger: Logger = LoggerFactory.getLogger("Bot")
-val backgroundCoroutineScope = CoroutineScope(Dispatchers.IO)
 
 val json = Json {
     prettyPrint = true
-}
-
-private object State {
-    val openSessions = mutableStateListOf<DefaultWebSocketServerSession>()
 }
 
 suspend fun main() = try {
@@ -73,7 +65,8 @@ suspend fun main() = try {
         }
     }
 
-    val twitchClient = setupTwitchBot(discordClient)
+    val backgroundCoroutineScope = CoroutineScope(Dispatchers.IO)
+    val twitchClient = setupTwitchBot(discordClient, backgroundCoroutineScope)
 
     hostServer()
     logger.info("WebSocket hosted.")
@@ -102,7 +95,7 @@ suspend fun main() = try {
     exitProcess(0)
 }
 
-private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
+private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope: CoroutineScope): TwitchClient {
     val chatAccountToken = File("data/twitchtoken.txt").readText()
 
     val twitchClient = TwitchClientBuilder.builder()
@@ -113,6 +106,8 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
 
     val nextAllowedCommandUsageInstantPerUser = mutableMapOf<Pair<Command, /* user: */ String>, Instant>()
     val nextAllowedCommandUsageInstantPerCommand = mutableMapOf<Command, Instant>()
+
+    val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data/reminders.json"), checkerScope = backgroundCoroutineScope)
 
     twitchClient.chat.run {
         connect()
@@ -188,7 +183,8 @@ private suspend fun setupTwitchBot(discordClient: Kord): TwitchClient {
         val commandHandlerScope = CommandHandlerScope(
             discordClient = discordClient,
             chat = twitchClient.chat,
-            messageEvent = messageEvent
+            messageEvent = messageEvent,
+            remindHandler = remindHandler
         )
 
         backgroundCoroutineScope.launch {
@@ -239,18 +235,6 @@ suspend fun CommandHandlerScope.sendMessageToDiscordBot(discordMessageContent: D
     return channel
 }
 
-fun CommandHandlerScope.startRemindInterval(intervalTime: Duration, remindMessage: String) {
-    backgroundCoroutineScope.launch {
-        delay(intervalTime)
-
-        val message = "${TwitchBotConfig.remindEmote} Time's up ${TwitchBotConfig.remindEmote} Reminder for: " + remindMessage.ifEmpty {
-            "I don't know. Something I guess? ${messageEvent.user.name} did not say for what ${TwitchBotConfig.remindEmoteFail}"
-        }
-
-        chat.sendMessage(TwitchBotConfig.channel, message)
-    }
-}
-
 private fun hostServer() {
     embeddedServer(CIO, port = ClipPlayerConfig.port) {
         install(WebSockets)
@@ -268,7 +252,6 @@ private fun hostServer() {
                 }
 
                 logger.info("Got new connection.")
-                State.openSessions.add(this)
 
                 try {
                     for (frame in incoming) {
@@ -279,7 +262,6 @@ private fun hostServer() {
                     }
                 } finally {
                     logger.info("User disconnected.")
-                    State.openSessions.remove(this)
                 }
             }
 

@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "alex.exe.simmi"
-version = "1.3.0"
+version = "1.3.1"
 
 repositories {
     google()
@@ -26,12 +26,12 @@ tasks.processResources {
 }
 
 dependencies {
-    val ktorVersion = "2.0.3"
+    val ktorVersion = "2.1.0"
 
     implementation(compose.desktop.currentOs)
 
     implementation("org.slf4j:slf4j-simple:1.7.36")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
     implementation("com.github.kwhat:jnativehook:2.2.2")
     implementation("com.github.twitch4j:twitch4j:1.11.0")
     implementation("com.github.tkuenneth:nativeparameterstoreaccess:0.1.2")
@@ -44,7 +44,7 @@ dependencies {
     implementation("io.ktor:ktor-server-partial-content:$ktorVersion")
     implementation("io.ktor:ktor-server-auto-head-response:$ktorVersion")
 
-    implementation("dev.kord:kord-core:0.8.0-M14")
+    implementation("dev.kord:kord-core:0.8.0-M16")
 }
 
 
