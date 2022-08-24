@@ -1,8 +1,6 @@
 package commands
 
 import Command
-import RemindHandler.addToReminders
-import RemindHandler
 import config.TwitchBotConfig
 import logger
 import kotlin.time.Duration.Companion.minutes
@@ -44,6 +42,6 @@ val remindCommand: Command = Command(
         addedCommandCooldown = TwitchBotConfig.commandCooldown
 
         chat.sendMessage(TwitchBotConfig.channel, "${TwitchBotConfig.explanationEmote} You will be reminded in $intervalTime")
-        addToReminders(intervalTime, arguments.drop(1).joinToString(" "))
+        remindHandler.addToReminders(intervalTime, messageEvent.user.name, arguments.drop(1).joinToString(" "))
     }
 )

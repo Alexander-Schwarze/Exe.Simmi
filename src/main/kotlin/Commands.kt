@@ -15,6 +15,7 @@ data class CommandHandlerScope(
     val discordClient: Kord,
     val chat: TwitchChat,
     val messageEvent: ChannelMessageEvent,
+    val remindHandler: RemindHandler,
     var addedUserCooldown: Duration = Duration.ZERO,
     var addedCommandCooldown: Duration = Duration.ZERO
 )
