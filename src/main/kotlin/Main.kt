@@ -92,7 +92,7 @@ suspend fun main() = try {
 } catch (e: Throwable) {
     JOptionPane.showMessageDialog(null, e.message + "\n" + StringWriter().also { e.printStackTrace(PrintWriter(it)) }, "InfoBox: File Debugger", JOptionPane.INFORMATION_MESSAGE)
     logger.error("Error while executing program.", e)
-    exitProcess(0)
+    exitProcess(-1)
 }
 
 private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope: CoroutineScope): TwitchClient {
