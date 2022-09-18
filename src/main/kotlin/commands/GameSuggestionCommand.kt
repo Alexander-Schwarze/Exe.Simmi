@@ -10,6 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 
 val gameSuggestionCommand: Command = Command(
     names = listOf("gs", "gamesuggestion"),
+    description = "Automatically posts the given message in the game suggestion channel on Discord.",
     handler = { arguments ->
         val message = arguments.joinToString(" ")
         if (message.trim().isEmpty()) {

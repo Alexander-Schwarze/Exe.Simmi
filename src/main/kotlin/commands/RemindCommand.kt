@@ -8,6 +8,7 @@ import kotlin.time.Duration.Companion.seconds
 
 val remindCommand: Command = Command(
     names = listOf("remind", "r"),
+    description = "Saves a remind message for given duration. If the time is due, the bot will post the given message or a default one, if there was no message given.",
     handler = { arguments ->
         if (messageEvent.user.name !in TwitchBotConfig.remindCommandUsers && messageEvent.user.id !in TwitchBotConfig.remindCommandUsers) {
             return@Command

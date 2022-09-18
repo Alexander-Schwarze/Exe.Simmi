@@ -8,6 +8,7 @@ import kotlin.time.Duration
 
 data class Command(
     val names: List<String>,
+    val description: String,
     val handler: suspend CommandHandlerScope.(arguments: List<String>) -> Unit
 )
 

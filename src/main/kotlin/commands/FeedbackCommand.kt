@@ -10,6 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 
 val feedbackCommand: Command = Command(
     names = listOf("fb", "feedback"),
+    description = "Automatically posts the given message in the feedback channel on Discord.",
     handler = { arguments ->
         val message = arguments.joinToString(" ")
         if (message.trim().isEmpty()) {

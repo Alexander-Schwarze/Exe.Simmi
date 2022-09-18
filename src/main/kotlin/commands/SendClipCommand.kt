@@ -11,6 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 
 val sendClipCommand: Command = Command(
     names = listOf("sc", "sendclip", "clip", "clips"),
+    description = "Automatically posts the given link of a clip in the clip channel on Discord. Anything aside from the link will be dropped.",
     handler = { arguments ->
         var link = arguments.filter { it.contains("https:") }.findLast { argument ->
             TwitchBotConfig.allowedDomains.any {
