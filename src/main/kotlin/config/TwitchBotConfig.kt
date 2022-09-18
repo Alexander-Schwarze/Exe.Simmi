@@ -25,4 +25,5 @@ object TwitchBotConfig {
     val remindCommandUsers: List<String> = properties.getProperty("remind_command_users").lowercase(Locale.getDefault()).split(",")
     val remindEmote: String = properties.getProperty("remind_emote")
     val remindEmoteFail: String = properties.getProperty("remind_emote_fail")
+    val runNameRedeemId: String = properties.getProperty("run_name_redeem_id")
 }
