@@ -28,5 +28,6 @@ val commands = listOf(
     feedbackCommand,
     gameSuggestionCommand,
     sendClipCommand,
-    remindCommand
+    remindCommand,
+    runnerNameCommand
 )

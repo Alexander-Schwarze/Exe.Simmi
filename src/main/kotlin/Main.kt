@@ -224,7 +224,8 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
 
         val redeemHandlerScope = RedeemHandlerScope(
             chat = twitchClient.chat,
-            redeemEvent = redeemEvent
+            redeemEvent = redeemEvent,
+            runNamesRedeemHandler = runNamesRedeemHandler
         )
 
         backgroundCoroutineScope.launch {

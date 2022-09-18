@@ -25,6 +25,7 @@ Before executing the program, you need a folder "data" on the same level as the 
     * remind_command_users=\<a list of users that are allowed to use the remind-command, separated by ",">  
     * remind_emote=\<twitch emote that appears when the remind-message appears>
     * remind_emote_fail=\<twitch emote that appears when the user has not given a remind-message>
+    * run_name_redeem_id=\<ID of the run name redeem on the twitch channel. If you don't have the ID ready, just use the title and the bot will display a warning with the ID, so you can replace it.>
 * discordBotConfig.properties
   * feedback_channel_id=\<discord channel id for the feedback channel>
   * game_channel_id=\<discord channel id for the game channel>

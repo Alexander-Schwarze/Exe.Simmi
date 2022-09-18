@@ -8,7 +8,7 @@ import logger
 import java.io.File
 
 class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFile: File) {
-    private var runNames = mutableListOf<String>()
+    private var runNames = listOf<String>()
         private set(value) {
             field = value
             runNamesFile.writeText(json.encodeToString(field))
@@ -29,6 +29,20 @@ class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFi
                 mutableListOf()
             }
         }
+    }
 
+    fun popNextRunName(): String {
+        return if(runNames.isNotEmpty()) {
+            runNames.first().also {
+                runNames = runNames.drop(1).toMutableList()
+                logger.info("Popped new runner: $it")
+            }
+        } else {
+            ""
+        }
+    }
+
+    fun addRunName(name: String) {
+        runNames = runNames + name
     }
 }

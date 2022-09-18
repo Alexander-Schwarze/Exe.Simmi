@@ -1,5 +1,6 @@
 import com.github.twitch4j.chat.TwitchChat
 import com.github.twitch4j.pubsub.events.RewardRedeemedEvent
+import handler.RunNamesRedeemHandler
 import redeems.runNameRedeem
 
 data class Redeem(
@@ -9,7 +10,8 @@ data class Redeem(
 
 data class RedeemHandlerScope(
     val chat: TwitchChat,
-    val redeemEvent: RewardRedeemedEvent
+    val redeemEvent: RewardRedeemedEvent,
+    val runNamesRedeemHandler: RunNamesRedeemHandler
 )
 
 val redeems = listOf(
