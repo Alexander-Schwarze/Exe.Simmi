@@ -18,6 +18,8 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
+import handler.RemindHandler
+import handler.RunNamesRedeemHandler
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
@@ -34,7 +36,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
-import kotlinx.html.CommandType
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -44,8 +45,6 @@ import java.nio.file.Paths
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 
 val logger: Logger = LoggerFactory.getLogger("Bot")
@@ -114,6 +113,7 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     val nextAllowedCommandUsageInstantPerCommand = mutableMapOf<Command, Instant>()
 
     val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data/reminders.json"), checkerScope = backgroundCoroutineScope)
+    val runNamesRedeemHandler = RunNamesRedeemHandler(chat = twitchClient.chat, runNamesFile = File("data/runNames.json"))
 
     twitchClient.chat.run {
         connect()
@@ -198,7 +198,8 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
             discordClient = discordClient,
             chat = twitchClient.chat,
             messageEvent = messageEvent,
-            remindHandler = remindHandler
+            remindHandler = remindHandler,
+            runNamesRedeemHandler = runNamesRedeemHandler
         )
 
         backgroundCoroutineScope.launch {
@@ -212,7 +213,6 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     }
 
     twitchClient.eventManager.onEvent(RewardRedeemedEvent::class.java) { redeemEvent ->
-        logger.error(redeemEvent.eventId + " " + redeemEvent.toString())
 
         val redeem = redeems.find { redeemEvent.redemption.reward.id in it.id || redeemEvent.redemption.reward.title in it.id }.also {
             if (it != null) {
