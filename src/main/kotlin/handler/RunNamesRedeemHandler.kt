@@ -6,6 +6,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import logger
 import java.io.File
+import kotlin.math.absoluteValue
 
 class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFile: File) {
     private var runNames = listOf<String>()
@@ -39,10 +40,22 @@ class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFi
             }
         } else {
             ""
+        }.also {
+            logger.info("New run names list: ${runNames.joinToString("|")}")
         }
     }
 
     fun addRunName(name: String) {
         runNames = runNames + name
+        logger.info("Added run name $name to the list!")
+        logger.info("New run names list: ${runNames.joinToString("|")}")
+    }
+
+    fun getNextRunners(amount: Int): List<String> {
+        return try {
+            runNames.subList(0, amount.absoluteValue)
+        } catch (e: java.lang.IndexOutOfBoundsException) {
+            runNames.subList(0, runNames.size)
+        }
     }
 }

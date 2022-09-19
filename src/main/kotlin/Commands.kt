@@ -1,7 +1,6 @@
 
 import com.github.twitch4j.chat.TwitchChat
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
-import com.github.twitch4j.common.events.domain.EventUser
 import commands.*
 import dev.kord.core.Kord
 import handler.RemindHandler
@@ -29,5 +28,6 @@ val commands = listOf(
     gameSuggestionCommand,
     sendClipCommand,
     remindCommand,
-    runnerNameCommand
+    runnerNameCommand,
+    runnersListCommand
 )
