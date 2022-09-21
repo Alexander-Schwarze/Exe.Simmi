@@ -26,7 +26,14 @@ class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFi
                     logger.info("Existing run names file found! Values: ${currentRemindersData.joinToString(" | ")}")
                 }
             } catch (e: Exception) {
-                logger.warn("Error while reading run names file. Initializing empty list", e)
+                logger.warn("Error while reading run names file. Did something alter its content? Manually check the content below, fix it, put it in and restart the app!", e)
+                try {
+                    logger.warn("\n" + runNamesFile.readText())
+                } catch (e: Exception) {
+                    logger.error("Something went wrong with reading the file content yet again. Aborting...")
+                    throw ExceptionInInitializerError()
+                }
+                logger.info("Initializing empty list!")
                 mutableListOf()
             }
         }

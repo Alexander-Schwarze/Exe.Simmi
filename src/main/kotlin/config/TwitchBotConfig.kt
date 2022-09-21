@@ -26,4 +26,5 @@ object TwitchBotConfig {
     val remindEmote: String = properties.getProperty("remind_emote")
     val remindEmoteFail: String = properties.getProperty("remind_emote_fail")
     val runNameRedeemId: String = properties.getProperty("run_name_redeem_id")
+    val amountDisplayedRunnerNames = properties.getProperty("amount_displayed_runner_names").toInt()
 }

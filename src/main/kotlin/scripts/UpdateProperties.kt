@@ -2,7 +2,7 @@ package scripts
 
 import java.io.File
 
-// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-3-1.jar
+// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-0.jar
 
 const val latestVersion = "1.4.0"
 
@@ -49,7 +49,8 @@ val defaultPropertiesValues = listOf(
         Pair("remind_emote", "DinkDonk"),
         Pair("remind_emote_fail", "WorryStick"),
         // Since Version: 1.4.0
-        Pair("run_name_redeem_id", "I AM THE RUN")
+        Pair("run_name_redeem_id", "I AM THE RUN"),
+        Pair("amount_displayed_runner_names", "5")
     )
 )
 

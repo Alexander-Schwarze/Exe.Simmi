@@ -7,7 +7,7 @@ import pluralForm
 val runnersListCommand: Command = Command(
     names = listOf("rl", "runnerslist"),
     handler = {
-        val desiredAmount = 5
+        val desiredAmount = TwitchBotConfig.amountDisplayedRunnerNames
         val runners = runNamesRedeemHandler.getNextRunners(desiredAmount)
         chat.sendMessage(
             TwitchBotConfig.channel,
