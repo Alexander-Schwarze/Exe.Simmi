@@ -6,6 +6,7 @@ import pluralForm
 
 val runnersListCommand: Command = Command(
     names = listOf("rl", "runnerslist"),
+    description = "Gives a list of the next ${TwitchBotConfig.amountDisplayedRunnerNames} runner names for ${TwitchBotConfig.channel}'s challenge runs.",
     handler = {
         val desiredAmount = TwitchBotConfig.amountDisplayedRunnerNames
         val runners = runNamesRedeemHandler.getNextRunners(desiredAmount)
