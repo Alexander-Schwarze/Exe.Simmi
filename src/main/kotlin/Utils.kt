@@ -36,3 +36,10 @@ data class Reminder (
     val message: String,
     val timestampDue: Instant
 )
+
+fun String.pluralForm(number: Int) = when {
+    number == 1 -> this
+    endsWith("y") -> "${substringBeforeLast("y")}ies"
+    equals("is") -> "are"
+    else -> "${this}s"
+}

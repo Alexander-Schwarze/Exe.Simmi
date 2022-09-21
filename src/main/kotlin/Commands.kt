@@ -1,9 +1,10 @@
 
 import com.github.twitch4j.chat.TwitchChat
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
-import com.github.twitch4j.common.events.domain.EventUser
 import commands.*
 import dev.kord.core.Kord
+import handler.RemindHandler
+import handler.RunNamesRedeemHandler
 import kotlin.time.Duration
 
 data class Command(
@@ -17,6 +18,7 @@ data class CommandHandlerScope(
     val chat: TwitchChat,
     val messageEvent: ChannelMessageEvent,
     val remindHandler: RemindHandler,
+    val runNamesRedeemHandler: RunNamesRedeemHandler,
     var addedUserCooldown: Duration = Duration.ZERO,
     var addedCommandCooldown: Duration = Duration.ZERO
 )
@@ -26,5 +28,7 @@ val commands = listOf(
     feedbackCommand,
     gameSuggestionCommand,
     sendClipCommand,
-    remindCommand
+    remindCommand,
+    runnerNameCommand,
+    runnersListCommand
 )
