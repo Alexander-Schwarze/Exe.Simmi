@@ -6,7 +6,7 @@ import config.TwitchBotConfig
 val runnerNameCommand: Command = Command(
     names = listOf("rn", "runnername"),
     handler = {
-        if(messageEvent.user.id != TwitchBotConfig.channel && messageEvent.user.name != "alexshadowolex") {
+        if(messageEvent.user.id != TwitchBotConfig.channel) {
             return@Command
         }
         val runnerName = runNamesRedeemHandler.popNextRunName()

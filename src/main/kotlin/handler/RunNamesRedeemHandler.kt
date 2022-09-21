@@ -53,9 +53,10 @@ class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFi
     }
 
     fun addRunName(name: String) {
-        runNames = runNames + name
-        logger.info("Added run name $name to the list!")
-        logger.info("New run names list: ${runNames.joinToString("|")}")
+        runNames = (runNames + name).also {
+            logger.info("Added run name $name to the list!")
+            logger.info("New run names list: ${it.joinToString("|")}")
+        }
     }
 
     fun getNextRunners(amount: Int): List<String> {
