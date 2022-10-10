@@ -2,9 +2,9 @@ package scripts
 
 import java.io.File
 
-// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-0.jar
+// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-1.jar
 
-const val latestVersion = "1.4.0"
+const val latestVersion = "1.4.1"
 
 val defaultPropertiesValues = listOf(
     // ClipPlayer properties
