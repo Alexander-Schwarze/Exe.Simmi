@@ -2,9 +2,9 @@ package scripts
 
 import java.io.File
 
-// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-1.jar
+// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-2.jar
 
-const val latestVersion = "1.4.1"
+const val latestVersion = "1.4.2"
 
 val defaultPropertiesValues = listOf(
     // ClipPlayer properties
@@ -50,7 +50,10 @@ val defaultPropertiesValues = listOf(
         Pair("remind_emote_fail", "WorryStick"),
         // Since Version: 1.4.0
         Pair("run_name_redeem_id", "I AM THE RUN"),
-        Pair("amount_displayed_runner_names", "5")
+        Pair("amount_displayed_runner_names", "5"),
+        // Since Version: 1.4.2
+        Pair("current_runner_name_pre_text", "Current Runner:"),
+        Pair("current_runner_name_post_text", "!dslb")
     )
 )
 

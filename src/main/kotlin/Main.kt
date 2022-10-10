@@ -308,6 +308,24 @@ private fun hostServer() {
     }.start(wait = false)
 }
 
+private const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunnerName.txt"
+fun updateCurrentRunnerName(currentRunner: String) {
+    try {
+        logger.info("Updating current runner name in file \"$CURRENT_RUNNER_NAME_FILE\"")
+        val currentRunnerNameFile = File(CURRENT_RUNNER_NAME_FILE)
+
+        if(!currentRunnerNameFile.exists()) {
+            currentRunnerNameFile.createNewFile()
+        }
+
+        currentRunnerNameFile.writeText(TwitchBotConfig.currentRunnerNamePreText + " " + currentRunner + " | " + TwitchBotConfig.currentRunnerNamePostText)
+        logger.info("Finished updating current runner name in file")
+    } catch (e: Exception) {
+        logger.error("An error occurred while using the function updateCurrentRunnerName\n", e)
+    }
+}
+
+
 private const val LOG_DIRECTORY = "logs"
 
 fun setupLogging() {

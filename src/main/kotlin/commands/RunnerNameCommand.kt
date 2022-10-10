@@ -2,6 +2,7 @@ package commands
 
 import Command
 import config.TwitchBotConfig
+import updateCurrentRunnerName
 
 val runnerNameCommand: Command = Command(
     names = listOf("rn", "runnername"),
@@ -17,6 +18,7 @@ val runnerNameCommand: Command = Command(
                 } else {
                     "No one, we are missing runners!"
                 }
+        updateCurrentRunnerName(runnerName)
         chat.sendMessage(TwitchBotConfig.channel, message)
     }
 )
