@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -308,18 +309,28 @@ private fun hostServer() {
     }.start(wait = false)
 }
 
-private const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunnerName.txt"
+private const val CURRENT_RUNNER_NAME_DISPLAY_FILE = "data\\currentRunnerNameDisplay.txt"
+private const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunnerName.json"
 fun updateCurrentRunnerName(currentRunner: String) {
     try {
-        logger.info("Updating current runner name in file \"$CURRENT_RUNNER_NAME_FILE\"")
+        logger.info("Updating current runner name in display file \"$CURRENT_RUNNER_NAME_DISPLAY_FILE\"")
+        val currentRunnerNameDisplayFile = File(CURRENT_RUNNER_NAME_DISPLAY_FILE)
+
+        if(!currentRunnerNameDisplayFile.exists()) {
+            currentRunnerNameDisplayFile.createNewFile()
+        }
+
+        currentRunnerNameDisplayFile.writeText(TwitchBotConfig.currentRunnerNamePreText + " " + currentRunner + " | " + TwitchBotConfig.currentRunnerNamePostText)
+
+        logger.info("Updating current runner name in data file \"$CURRENT_RUNNER_NAME_FILE\"")
         val currentRunnerNameFile = File(CURRENT_RUNNER_NAME_FILE)
 
         if(!currentRunnerNameFile.exists()) {
             currentRunnerNameFile.createNewFile()
         }
 
-        currentRunnerNameFile.writeText(TwitchBotConfig.currentRunnerNamePreText + " " + currentRunner + " | " + TwitchBotConfig.currentRunnerNamePostText)
-        logger.info("Finished updating current runner name in file")
+        currentRunnerNameFile.writeText(json.encodeToString(currentRunner))
+        logger.info("Finished updating current runner name in files")
     } catch (e: Exception) {
         logger.error("An error occurred while using the function updateCurrentRunnerName\n", e)
     }
