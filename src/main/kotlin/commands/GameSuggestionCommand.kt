@@ -28,7 +28,7 @@ val gameSuggestionCommand: Command = Command(
 
         val channel = sendMessageToDiscordBot(currentMessageContent)
         val messageSentOnTwitchChat = chat.sendMessage(TwitchBotConfig.channel, "Message sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
-        logger.info("Message sent to Twich Chat: $messageSentOnTwitchChat")
+        logger.info("Message sent to Twitch Chat: $messageSentOnTwitchChat")
 
         addedUserCooldown = TwitchBotConfig.userCooldown
         addedCommandCooldown = TwitchBotConfig.commandCooldown
