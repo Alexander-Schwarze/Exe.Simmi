@@ -45,6 +45,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auto-head-response:$ktorVersion")
 
     implementation("dev.kord:kord-core:0.8.0-M16")
+    implementation("org.jsoup:jsoup:1.15.3")
 }
 
 

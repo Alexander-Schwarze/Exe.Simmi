@@ -2,9 +2,9 @@ package scripts
 
 import java.io.File
 
-// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-2.jar
+// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-3.jar
 
-const val latestVersion = "1.4.2"
+const val latestVersion = "1.4.3"
 
 val defaultPropertiesValues = listOf(
     // ClipPlayer properties
@@ -23,7 +23,9 @@ val defaultPropertiesValues = listOf(
         // Since Version: 1.0.2
         Pair("clip_channel_id", "1234567890"),
         // Since Version: 1.1.0
-        Pair("embed_accent_color", "#E9A623")
+        Pair("embed_accent_color", "#E9A623"),
+        // Since Version: 1.4.3
+        Pair("ended_run_channel_id", "1234567890")
     ),
     // TwitchBotConfig properties
     mapOf(
@@ -53,7 +55,9 @@ val defaultPropertiesValues = listOf(
         Pair("amount_displayed_runner_names", "5"),
         // Since Version: 1.4.2
         Pair("current_runner_name_pre_text", "Current Runner:"),
-        Pair("current_runner_name_post_text", "!dslb")
+        Pair("current_runner_name_post_text", "!dslb"),
+        // Since Version: 1.4.3
+        Pair("hit_counter_location", "D:\\\\Path\\\\To\\\\HitCounterManager")
     )
 )
 

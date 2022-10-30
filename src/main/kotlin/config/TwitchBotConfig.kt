@@ -29,4 +29,5 @@ object TwitchBotConfig {
     val amountDisplayedRunnerNames = properties.getProperty("amount_displayed_runner_names").toInt()
     val currentRunnerNamePreText: String = properties.getProperty("current_runner_name_pre_text")
     val currentRunnerNamePostText: String = properties.getProperty("current_runner_name_post_text")
+    val hitCounterLocation: String = properties.getProperty("hit_counter_location")
 }

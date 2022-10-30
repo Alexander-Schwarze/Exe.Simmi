@@ -29,19 +29,21 @@ Before executing the program, you need a folder "data" on the same level as the 
     * amount_displayed_runner_names=\<Integer that shows how many runner names are shown on twitch chat via. runnerslist-command>
     * current_runner_name_pre_text=\<Pre text to display the current runner's name in your streaming software>
     * current_runner_name_post_text=\<Post text to display the current runner's name in your streaming software>
+    * hit_counter_location=\<Location to the root folder of your HitCounterManager folder (the folder, which holds the file "HitCounterManager.exe")>
 * discordBotConfig.properties
-  * feedback_channel_id=\<discord channel id for the feedback channel>
-  * game_channel_id=\<discord channel id for the game channel>
-  * clip_channel_id=\<discord channel id for the clip channel>
-  * embed_accent_color=\<color for the discord embed accent in HEX (with "#" at the beginning)>
+    * feedback_channel_id=\<discord channel id for the feedback channel>
+    * game_channel_id=\<discord channel id for the game channel>
+    * clip_channel_id=\<discord channel id for the clip channel>
+    * embed_accent_color=\<color for the discord embed accent in HEX (with "#" at the beginning)>
+    * ended_run_channel_id=\<discord channel id for the ended run channel>
 * clipPlayer.properties
-  * clip_location=\<path to the directory with the clips, you can use a relative path (e.g. ..\\..\\clips\\folder) or the direct path (e.g. D:\\Files\\Videos\\clips\\folder)>
-  * allowed_video_files=\<a list of video file types (without the dot, e.g. "mp4") that are allowed for the ClipPlayer, seperated by ",">
-  * port=\<the port the websocket will be working on. make sure to use an unusual port (e.g. 12345)>
+    * clip_location=\<path to the directory with the clips, you can use a relative path (e.g. ..\\..\\clips\\folder) or the direct path (e.g. D:\\Files\\Videos\\clips\\folder)>
+    * allowed_video_files=\<a list of video file types (without the dot, e.g. "mp4") that are allowed for the ClipPlayer, seperated by ",">
+    * port=\<the port the websocket will be working on. make sure to use an unusual port (e.g. 12345)>
 * twitchtoken.txt
     * The only content: twitch bot account token
 * discordtoken.txt
-  * The only content: discord bot account token
+    * The only content: discord bot account token
 
 Just replace the stuff in <> with the value described.
 

@@ -12,4 +12,5 @@ object DiscordBotConfig {
     val gameChannelId = Snowflake(properties.getProperty("game_channel_id").toLong())
     val clipChannelId = Snowflake(properties.getProperty("clip_channel_id").toLong())
     val embedAccentColor = Color(properties.getProperty("embed_accent_color").drop(1).toInt(radix = 16))
+    val endedRunChannelId = Snowflake(properties.getProperty("ended_run_channel_id").toLong())
 }

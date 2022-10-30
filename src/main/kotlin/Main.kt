@@ -36,8 +36,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jsoup.Jsoup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.*
@@ -336,6 +338,52 @@ fun updateCurrentRunnerName(currentRunner: String) {
     }
 }
 
+suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
+    val splitName = overrideSplit.ifEmpty {
+        logger.info("Extracting name from HitCounter")
+        getCurrentSplitFromHitCounter()
+    }
+    val currentRunner = json.decodeFromString<String>(File(CURRENT_RUNNER_NAME_FILE).readText())
+
+    val message = "Runner \"$currentRunner\" died on split $splitName"
+
+    val currentMessageContent = DiscordMessageContent(
+        message = DiscordMessageContent.Message.FromText(message),
+        title = "Runner Update for ",
+        user = TwitchBotConfig.channel,
+        channelId = DiscordBotConfig.endedRunChannelId
+    )
+
+    val channel = sendMessageToDiscordBot(currentMessageContent)
+    chat.sendMessage(TwitchBotConfig.channel, "Ended run message for \"$currentRunner\" sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
+    logger.info("Finished saving last runners split")
+}
+
+const val ACTIVE_SPLIT_STRING = "\"split_active\": "
+fun getCurrentSplitFromHitCounter(): String {
+    return try {
+        val scriptElement = Jsoup.parse(File(TwitchBotConfig.hitCounterLocation + "\\HitCounter.html")).getElementsByTag("script").first()
+
+        val lines = scriptElement?.html()?.split("\n")
+        org.jsoup.parser.Parser.unescapeEntities(
+            lines?.find { it.startsWith(ACTIVE_SPLIT_STRING) }?.substringAfter(ACTIVE_SPLIT_STRING)?.substringBefore(",")?.toInt()
+                ?.let { index ->
+                    lines.filter {
+                        it.contains("[") && it.contains("]")
+                    }.let {
+                        it + "beyond infinity (after last split)"
+                    }[index].split(",")[0].let { item ->
+                        val result = item.replace("\"", "")
+                        result.replace("[", "")
+                    }
+                } ?: "Error".also { logger.error("Error occurred while getting the index and accessing the array") },
+            true
+        )
+    } catch (e: Exception) {
+        logger.error("An error occurred while reading from HitCounterManager.", e)
+        "Error"
+    }
+}
 
 private const val LOG_DIRECTORY = "logs"
 
