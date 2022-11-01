@@ -1,6 +1,7 @@
 package handler
 
 import com.github.twitch4j.chat.TwitchChat
+import config.TwitchBotConfig
 import json
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -64,6 +65,15 @@ class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFi
             runNames.subList(0, amount.absoluteValue)
         } catch (e: java.lang.IndexOutOfBoundsException) {
             runNames.subList(0, runNames.size)
+        }
+    }
+
+    fun getPositionInQueue(name: String): String {
+        val index = runNames.indexOf(name)
+        return if(index != -1) {
+            "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} ${TwitchBotConfig.explanationEmote}"
+        } else {
+            "$name is not in queue. They should redeem it, if they want to change this ${TwitchBotConfig.confirmEmote}"
         }
     }
 }

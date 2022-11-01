@@ -30,6 +30,7 @@ Before executing the program, you need a folder "data" on the same level as the 
     * current_runner_name_pre_text=\<Pre text to display the current runner's name in your streaming software>
     * current_runner_name_post_text=\<Post text to display the current runner's name in your streaming software>
     * hit_counter_location=\<Location to the root folder of your HitCounterManager folder (the folder, which holds the file "HitCounterManager.exe")>
+    * runners_list_index_emote=\<twitch emote that appears when the user is found in queue and the bot jokingly flames the user for being impatient>
 * discordBotConfig.properties
     * feedback_channel_id=\<discord channel id for the feedback channel>
     * game_channel_id=\<discord channel id for the game channel>

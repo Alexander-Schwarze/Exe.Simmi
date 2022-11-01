@@ -57,7 +57,8 @@ val defaultPropertiesValues = listOf(
         Pair("current_runner_name_pre_text", "Current Runner:"),
         Pair("current_runner_name_post_text", "!dslb"),
         // Since Version: 1.4.3
-        Pair("hit_counter_location", "D:\\\\Path\\\\To\\\\HitCounterManager")
+        Pair("hit_counter_location", "D:\\\\Path\\\\To\\\\HitCounterManager"),
+        Pair("runners_list_index_emote", "WorryStick")
     )
 )
 
