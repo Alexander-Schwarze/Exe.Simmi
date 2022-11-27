@@ -16,7 +16,7 @@ val helpCommand: Command = Command(
                     ${commands.joinToString("; ") { command -> command.names.joinToString("|") { "${TwitchBotConfig.commandPrefix}${it}" } }}.
                 """.trimIndent()
 
-        val command = commands.find { arguments.firstOrNull() in it.names }
+        val command = commands.find { arguments.firstOrNull()?.lowercase() in it.names }
         if(command != null) {
             message =
                 """

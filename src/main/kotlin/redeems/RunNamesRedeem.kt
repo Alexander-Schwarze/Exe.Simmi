@@ -7,6 +7,6 @@ import logger
 val runNameRedeem: Redeem = Redeem(
     id = TwitchBotConfig.runNameRedeemId,
     handler = {
-        runNamesRedeemHandler.addRunName(redeemEvent.redemption.user.displayName)
+        runNamesRedeemHandler.addRunName(redeemEvent.redemption.user.displayName.lowercase())
     }
 )
