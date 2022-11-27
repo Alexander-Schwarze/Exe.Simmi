@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "alex.exe.simmi"
-version = "1.4.3"
+version = "1.4.4"
 
 repositories {
     google()

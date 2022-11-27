@@ -2,6 +2,7 @@ package commands
 
 import Command
 import config.TwitchBotConfig
+import logger
 import pluralForm
 
 val runnersListCommand: Command = Command(
@@ -11,14 +12,14 @@ val runnersListCommand: Command = Command(
         val desiredAmount = TwitchBotConfig.amountDisplayedRunnerNames
         val runners = runNamesRedeemHandler.getNextRunners(desiredAmount)
         val name = if(arguments.isNotEmpty()) {
-            arguments[0].trim()
+            arguments[0].trim().also { logger.info("Command got called with arguments, name to search for is \"$it\"") }
         } else {
             null
         }
         chat.sendMessage(
             TwitchBotConfig.channel,
             if(name != null) {
-                runNamesRedeemHandler.getPositionInQueue(name)
+                runNamesRedeemHandler.getMessageForPositionInQueue(name).also { logger.info("Searched for name in queue") }
             } else {
                 if (runners.isEmpty()) {
                     "No further runners. Redeem it, I dare ya ${TwitchBotConfig.confirmEmote}"
@@ -39,7 +40,7 @@ val runnersListCommand: Command = Command(
                                         .joinToString(" and ")
                                 }
                             }"
-                }
+                }.also { logger.info("Posted the current queue") }
             }
         )
 

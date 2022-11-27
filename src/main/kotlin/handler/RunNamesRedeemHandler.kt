@@ -68,10 +68,10 @@ class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFi
         }
     }
 
-    fun getPositionInQueue(name: String): String {
+    fun getMessageForPositionInQueue(name: String): String {
         val index = runNames.indexOf(name)
         return if(index != -1) {
-            "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} ${TwitchBotConfig.explanationEmote}"
+            "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} of ${runNames.size} ${TwitchBotConfig.explanationEmote}"
         } else {
             "$name is not in queue. They should redeem it, if they want to change this ${TwitchBotConfig.confirmEmote}"
         }
