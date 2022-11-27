@@ -48,6 +48,7 @@ import java.nio.file.Paths
 import java.time.format.DateTimeFormatterBuilder
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
 
 val logger: Logger = LoggerFactory.getLogger("Bot")
@@ -174,7 +175,7 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         }
 
         if ((Clock.System.now() - nextAllowedGlobalCommandUsageInstant).isNegative() && CommandPermission.MODERATOR !in messageEvent.permissions) {
-            val secondsUntilTimeoutOver = nextAllowedGlobalCommandUsageInstant - Clock.System.now()
+            val secondsUntilTimeoutOver = (nextAllowedGlobalCommandUsageInstant - Clock.System.now()).inWholeSeconds.seconds
 
             twitchClient.chat.sendMessage(
                 TwitchBotConfig.channel,
@@ -186,7 +187,7 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         }
 
         if ((Clock.System.now() - nextAllowedCommandUsageInstant).isNegative() && CommandPermission.MODERATOR !in messageEvent.permissions) {
-            val secondsUntilTimeoutOver = nextAllowedCommandUsageInstant - Clock.System.now()
+            val secondsUntilTimeoutOver = (nextAllowedCommandUsageInstant - Clock.System.now()).inWholeSeconds.seconds
 
             twitchClient.chat.sendMessage(
                 TwitchBotConfig.channel,
