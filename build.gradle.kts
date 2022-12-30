@@ -26,14 +26,14 @@ tasks.processResources {
 }
 
 dependencies {
-    val ktorVersion = "2.1.0"
+    val ktorVersion = "2.2.1"
 
     implementation(compose.desktop.currentOs)
 
-    implementation("org.slf4j:slf4j-simple:1.7.36")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
+    implementation("org.slf4j:slf4j-simple:2.0.5")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
     implementation("com.github.kwhat:jnativehook:2.2.2")
-    implementation("com.github.twitch4j:twitch4j:1.11.0")
+    implementation("com.github.twitch4j:twitch4j:1.12.0")
     implementation("com.github.tkuenneth:nativeparameterstoreaccess:0.1.2")
 
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
