@@ -46,6 +46,10 @@ dependencies {
 
     implementation("dev.kord:kord-core:0.8.0-M16")
     implementation("org.jsoup:jsoup:1.15.3")
+
+    implementation("com.google.api-client:google-api-client:2.1.1")
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
+    implementation("com.google.apis:google-api-services-sheets:v4-rev20221216-2.0.0")
 }
 
 

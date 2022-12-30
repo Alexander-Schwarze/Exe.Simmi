@@ -11,6 +11,15 @@ import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
 import com.github.twitch4j.pubsub.events.RewardRedeemedEvent
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
+import com.google.api.client.json.gson.GsonFactory
+import com.google.api.client.util.store.FileDataStoreFactory
+import com.google.api.services.sheets.v4.Sheets
+import com.google.api.services.sheets.v4.SheetsScopes
 import config.TwitchBotConfig
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.createEmbed
@@ -36,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
+import kotlinx.html.InputType
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -46,6 +56,7 @@ import java.io.*
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.format.DateTimeFormatterBuilder
+import java.util.*
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -59,6 +70,7 @@ val json = Json {
 
 suspend fun main() = try {
     setupLogging()
+    setupGoogleConnection()
 
     val discordToken = File("data/discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
@@ -383,6 +395,34 @@ fun getCurrentSplitFromHitCounter(): String {
     } catch (e: Exception) {
         logger.error("An error occurred while reading from HitCounterManager.", e)
         "Error"
+    }
+}
+
+private const val GOOGLE_CREDENTIALS_FILE_PATH = "data\\google_credentials.json"
+private const val STORED_CREDENTIALS_TOKEN_FOLDER = "data\\tokens"
+private const val SPREADSHEET_ID = "1WiixeOkW-Vopkglw0iulnRix-StCYzWltafDbRhMVwI" // TODO Change later to Config
+fun setupGoogleConnection(): Sheets? {
+    try {
+        val jsonFactory = GsonFactory.getDefaultInstance()
+        val clientSecrets = GoogleClientSecrets.load(jsonFactory, File(GOOGLE_CREDENTIALS_FILE_PATH).reader())
+        val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
+
+        val flow: GoogleAuthorizationCodeFlow = GoogleAuthorizationCodeFlow.Builder(
+            httpTransport, jsonFactory, clientSecrets, Collections.singletonList(SheetsScopes.SPREADSHEETS)
+        )
+            .setDataStoreFactory(FileDataStoreFactory(File(STORED_CREDENTIALS_TOKEN_FOLDER)))
+            .setAccessType("offline")
+            .build()
+
+        val receiver = LocalServerReceiver.Builder().setPort(8888).build()
+
+        return Sheets.Builder(httpTransport, jsonFactory, AuthorizationCodeInstalledApp(flow, receiver).authorize("user"))
+            .setApplicationName("Sheet Service")
+            .build()
+
+    } catch (e: Exception) {
+        logger.error("An error occured while setting up connection to google: ", e)
+        return null
     }
 }
 
