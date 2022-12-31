@@ -4,7 +4,7 @@ import java.io.File
 
 // Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-3.jar
 
-const val latestVersion = "1.4.3"
+const val latestVersion = "1.5.0"
 
 val defaultPropertiesValues = listOf(
     // ClipPlayer properties
@@ -26,6 +26,14 @@ val defaultPropertiesValues = listOf(
         Pair("embed_accent_color", "#E9A623"),
         // Since Version: 1.4.3
         Pair("ended_run_channel_id", "1234567890")
+    ),
+    // GoogleSpreadSheetConfig properties
+    mapOf(
+        // Since Version: 1.5.0
+        Pair("spread_sheet_id", "abc123"),
+        Pair("sheet_name", "Sheet Name"),
+        Pair("first_data_cell", "A1"),
+        Pair("last_data_cell", "B2")
     ),
     // TwitchBotConfig properties
     mapOf(
@@ -67,9 +75,10 @@ val defaultPropertiesValues = listOf(
 fun main() {
     try {
         val propertiesFiles = listOf(
-            File("data/clipPlayer.properties"),
-            File("data/discordBotConfig.properties"),
-            File("data/twitchBotConfig.properties")
+            File("data\\clipPlayer.properties"),
+            File("data\\discordBotConfig.properties"),
+            File("data\\googleSpreadSheetConfig.properties"),
+            File("data\\twitchBotConfig.properties")
         )
 
 

@@ -20,6 +20,8 @@ import com.google.api.client.json.gson.GsonFactory
 import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.SheetsScopes
+import com.google.api.services.sheets.v4.model.ValueRange
+import config.GoogleSpreadSheetConfig
 import config.TwitchBotConfig
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.createEmbed
@@ -45,10 +47,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
-import kotlinx.html.InputType
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.apache.commons.text.similarity.LevenshteinDistance
 import org.jsoup.Jsoup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -70,7 +72,7 @@ val json = Json {
 
 suspend fun main() = try {
     setupLogging()
-    setupGoogleConnection()
+    val sheetService = setupGoogleConnection()
 
     val discordToken = File("data/discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
@@ -85,7 +87,7 @@ suspend fun main() = try {
     }
 
     val backgroundCoroutineScope = CoroutineScope(Dispatchers.IO)
-    val twitchClient = setupTwitchBot(discordClient, backgroundCoroutineScope)
+    val twitchClient = setupTwitchBot(discordClient, sheetService, backgroundCoroutineScope)
 
     hostServer()
     logger.info("WebSocket hosted.")
@@ -114,7 +116,7 @@ suspend fun main() = try {
     exitProcess(-1)
 }
 
-private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope: CoroutineScope): TwitchClient {
+private suspend fun setupTwitchBot(discordClient: Kord, sheetService: Sheets?, backgroundCoroutineScope: CoroutineScope): TwitchClient {
     val chatAccountToken = File("data/twitchtoken.txt").readText()
     val oAuth2Credential = OAuth2Credential("twitch", chatAccountToken)
 
@@ -215,7 +217,8 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
             chat = twitchClient.chat,
             messageEvent = messageEvent,
             remindHandler = remindHandler,
-            runNamesRedeemHandler = runNamesRedeemHandler
+            runNamesRedeemHandler = runNamesRedeemHandler,
+            sheetService = sheetService
         )
 
         backgroundCoroutineScope.launch {
@@ -356,9 +359,19 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
         logger.info("Extracting name from HitCounter")
         getCurrentSplitFromHitCounter()
     }
+
+    val (index, levinshteinDistance) = getIndexFromSplitName(splitName)
+
     val currentRunner = json.decodeFromString<String>(File(CURRENT_RUNNER_NAME_FILE).readText())
 
-    val message = "Runner \"$currentRunner\" died on split $splitName"
+    val message = "Runner \"$currentRunner\" died on split $splitName" + 
+            if(levinshteinDistance > 3) {
+                "\nThe manual split name was not as close to an existing one. Check the Leaderboard if the value is set correct"
+            } else {
+                ""
+            }
+
+    updateSpreadSheetLeaderboard(currentRunner, index, sheetService)
 
     val currentMessageContent = DiscordMessageContent(
         message = DiscordMessageContent.Message.FromText(message),
@@ -370,6 +383,98 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
     val channel = sendMessageToDiscordBot(currentMessageContent)
     chat.sendMessage(TwitchBotConfig.channel, "Ended run message for \"$currentRunner\" sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
     logger.info("Finished saving last runners split")
+}
+
+fun updateSpreadSheetLeaderboard(runnerName: String, splitIndex: Int, sheetService: Sheets?) {
+    if(sheetService == null) {
+        logger.error("sheet service was not setup correct. Aborted updating leaderboard...")
+        return
+    }
+    if(splitIndex == -1) {
+        return
+    }
+    try {
+        logger.info("Starting to update leaderboard")
+        val tableRange = "'${GoogleSpreadSheetConfig.sheetName}'!${GoogleSpreadSheetConfig.firstDataCell}:${GoogleSpreadSheetConfig.lastDataCell}"
+        // TODO Get color from twitch chat via IRC
+        // TODO Set color to cell and remove color of old cell
+        val tableContent = addMissingColumns(
+            sheetService.spreadsheets().values()
+                .get(GoogleSpreadSheetConfig.spreadSheetId, tableRange)
+                .setMajorDimension("COLUMNS")
+                .execute()
+                .getValues() as MutableList<MutableList<Any>>,
+            sheetService
+        )
+
+        var rowIndex = -1
+        var columnIndex = -1
+        var found = false
+
+        tableContent.forEachIndexed{ index, item ->
+            if(item.map { it.toString().lowercase() }.contains(runnerName.lowercase())){
+                columnIndex = index
+                rowIndex = item.indexOf(runnerName.lowercase())
+                found = true
+            }
+        }
+
+        if(splitIndex <= columnIndex && found) {
+            logger.info("No new distance PB for $runnerName")
+            return
+        }
+
+        if(found) {
+            tableContent[columnIndex][rowIndex] = ""
+            tableContent[columnIndex].remove("")
+            tableContent[columnIndex].add("")
+        }
+
+        tableContent[splitIndex].add(runnerName)
+
+        val body: ValueRange = ValueRange()
+            .setValues(tableContent)
+            .setMajorDimension("COLUMNS")
+
+        sheetService.spreadsheets().values().update(GoogleSpreadSheetConfig.spreadSheetId, tableRange, body)
+            .setValueInputOption("RAW")
+            .execute()
+
+
+    } catch (e: Exception) {
+        logger.error("Updating the google spread sheet failed. ", e)
+    }
+}
+
+fun addMissingColumns(input: MutableList<MutableList<Any>>, sheetService: Sheets): MutableList<MutableList<Any>> {
+    val columnsNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val lastCellLetterIndex = columnsNames.indexOf(GoogleSpreadSheetConfig.lastDataCell.filter { it.isLetter() })
+    var i = columnsNames.indexOf(GoogleSpreadSheetConfig.firstDataCell.filter { it.isLetter() })
+    val startIndex = i
+    val output = mutableListOf<MutableList<Any>>()
+    while(i <= lastCellLetterIndex) {
+        val currentCell = "'${GoogleSpreadSheetConfig.sheetName}'!${columnsNames[i]}${GoogleSpreadSheetConfig.firstDataCell.filter { it.isDigit() }}"
+        val cellValue = sheetService.spreadsheets().values()
+            .get(GoogleSpreadSheetConfig.spreadSheetId, currentCell)
+            .setMajorDimension("COLUMNS")
+            .execute()
+            .getValues()
+
+        try {
+            if (cellValue[0][0] != input[i - startIndex][0]) {
+                output.add(mutableListOf())
+            } else {
+                output.add(input[i - startIndex])
+            }
+        } catch (e: Exception) {
+            output.add(mutableListOf())
+        }
+
+        i++
+    }
+
+    logger.info("Added missing columns to input")
+    return output
 }
 
 const val ACTIVE_SPLIT_STRING = "\"split_active\": "
@@ -398,9 +503,36 @@ fun getCurrentSplitFromHitCounter(): String {
     }
 }
 
+fun getIndexFromSplitName(splitName: String): Pair<Int, Int> {
+    return try {
+        val scriptElement = Jsoup.parse(File(TwitchBotConfig.hitCounterLocation + "\\HitCounter.html")).getElementsByTag("script").first()
+        val cleanedUpSplitNames = scriptElement?.html()?.split("\n")?.filter {
+            it.contains("[") && it.contains("]")
+        }?.map {
+            org.jsoup.parser.Parser.unescapeEntities(
+                it.split(",")[0].let { item ->
+                    val result = item.replace("\"", "")
+                    result.replace("[", "")
+                },
+                true
+            )
+        }
+
+        val nameAndDistance = cleanedUpSplitNames?.map {
+            it to LevenshteinDistance.getDefaultInstance().apply(it.lowercase(), splitName.lowercase())
+        }?.minBy { (_, levenshteinDistance) -> levenshteinDistance }
+
+        val index = cleanedUpSplitNames?.indexOf(nameAndDistance?.first!!)
+
+        Pair(index!!, nameAndDistance?.second!!)
+    } catch (e: Exception) {
+        logger.error("An error occurred while reading from HitCounterManager to get the index.", e)
+        Pair(-1, -1)
+    }
+}
+
 private const val GOOGLE_CREDENTIALS_FILE_PATH = "data\\google_credentials.json"
 private const val STORED_CREDENTIALS_TOKEN_FOLDER = "data\\tokens"
-private const val SPREADSHEET_ID = "1WiixeOkW-Vopkglw0iulnRix-StCYzWltafDbRhMVwI" // TODO Change later to Config
 fun setupGoogleConnection(): Sheets? {
     try {
         val jsonFactory = GsonFactory.getDefaultInstance()

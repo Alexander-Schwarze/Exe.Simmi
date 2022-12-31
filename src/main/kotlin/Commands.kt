@@ -1,6 +1,7 @@
 
 import com.github.twitch4j.chat.TwitchChat
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
+import com.google.api.services.sheets.v4.Sheets
 import commands.*
 import dev.kord.core.Kord
 import handler.RemindHandler
@@ -19,6 +20,7 @@ data class CommandHandlerScope(
     val messageEvent: ChannelMessageEvent,
     val remindHandler: RemindHandler,
     val runNamesRedeemHandler: RunNamesRedeemHandler,
+    val sheetService: Sheets?,
     var addedUserCooldown: Duration = Duration.ZERO,
     var addedCommandCooldown: Duration = Duration.ZERO
 )
