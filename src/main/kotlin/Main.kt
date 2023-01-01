@@ -11,15 +11,7 @@ import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
 import com.github.twitch4j.pubsub.events.RewardRedeemedEvent
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
-import com.google.api.client.json.gson.GsonFactory
-import com.google.api.client.util.store.FileDataStoreFactory
 import com.google.api.services.sheets.v4.Sheets
-import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.api.services.sheets.v4.model.ValueRange
 import config.GoogleSpreadSheetConfig
 import config.TwitchBotConfig
@@ -31,6 +23,7 @@ import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import handler.RemindHandler
 import handler.RunNamesRedeemHandler
+import handler.SpreadSheetHandler
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
@@ -72,7 +65,7 @@ val json = Json {
 
 suspend fun main() = try {
     setupLogging()
-    val sheetService = setupGoogleConnection()
+    SpreadSheetHandler.instance.setupConnectionAndLoadData()
 
     val discordToken = File("data/discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
@@ -87,7 +80,7 @@ suspend fun main() = try {
     }
 
     val backgroundCoroutineScope = CoroutineScope(Dispatchers.IO)
-    val twitchClient = setupTwitchBot(discordClient, sheetService, backgroundCoroutineScope)
+    val twitchClient = setupTwitchBot(discordClient, backgroundCoroutineScope)
 
     hostServer()
     logger.info("WebSocket hosted.")
@@ -116,7 +109,7 @@ suspend fun main() = try {
     exitProcess(-1)
 }
 
-private suspend fun setupTwitchBot(discordClient: Kord, sheetService: Sheets?, backgroundCoroutineScope: CoroutineScope): TwitchClient {
+private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope: CoroutineScope): TwitchClient {
     val chatAccountToken = File("data/twitchtoken.txt").readText()
     val oAuth2Credential = OAuth2Credential("twitch", chatAccountToken)
 
@@ -131,7 +124,7 @@ private suspend fun setupTwitchBot(discordClient: Kord, sheetService: Sheets?, b
     val nextAllowedCommandUsageInstantPerCommand = mutableMapOf<Command, Instant>()
 
     val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data/reminders.json"), checkerScope = backgroundCoroutineScope)
-    val runNamesRedeemHandler = RunNamesRedeemHandler(chat = twitchClient.chat, runNamesFile = File("data/runNames.json"))
+    val runNamesRedeemHandler = RunNamesRedeemHandler(runNamesFile = File("data/runNames.json"))
 
     twitchClient.chat.run {
         connect()
@@ -217,8 +210,7 @@ private suspend fun setupTwitchBot(discordClient: Kord, sheetService: Sheets?, b
             chat = twitchClient.chat,
             messageEvent = messageEvent,
             remindHandler = remindHandler,
-            runNamesRedeemHandler = runNamesRedeemHandler,
-            sheetService = sheetService
+            runNamesRedeemHandler = runNamesRedeemHandler
         )
 
         backgroundCoroutineScope.launch {
@@ -371,7 +363,7 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
                 ""
             }
 
-    updateSpreadSheetLeaderboard(currentRunner, index, sheetService)
+    SpreadSheetHandler.instance.updateSpreadSheetLeaderboard(currentRunner, index)
 
     val currentMessageContent = DiscordMessageContent(
         message = DiscordMessageContent.Message.FromText(message),
@@ -383,98 +375,6 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
     val channel = sendMessageToDiscordBot(currentMessageContent)
     chat.sendMessage(TwitchBotConfig.channel, "Ended run message for \"$currentRunner\" sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
     logger.info("Finished saving last runners split")
-}
-
-fun updateSpreadSheetLeaderboard(runnerName: String, splitIndex: Int, sheetService: Sheets?) {
-    if(sheetService == null) {
-        logger.error("sheet service was not setup correct. Aborted updating leaderboard...")
-        return
-    }
-    if(splitIndex == -1) {
-        return
-    }
-    try {
-        logger.info("Starting to update leaderboard")
-        val tableRange = "'${GoogleSpreadSheetConfig.sheetName}'!${GoogleSpreadSheetConfig.firstDataCell}:${GoogleSpreadSheetConfig.lastDataCell}"
-        // TODO Get color from twitch chat via IRC
-        // TODO Set color to cell and remove color of old cell
-        val tableContent = addMissingColumns(
-            sheetService.spreadsheets().values()
-                .get(GoogleSpreadSheetConfig.spreadSheetId, tableRange)
-                .setMajorDimension("COLUMNS")
-                .execute()
-                .getValues() as MutableList<MutableList<Any>>,
-            sheetService
-        )
-
-        var rowIndex = -1
-        var columnIndex = -1
-        var found = false
-
-        tableContent.forEachIndexed{ index, item ->
-            if(item.map { it.toString().lowercase() }.contains(runnerName.lowercase())){
-                columnIndex = index
-                rowIndex = item.indexOf(runnerName.lowercase())
-                found = true
-            }
-        }
-
-        if(splitIndex <= columnIndex && found) {
-            logger.info("No new distance PB for $runnerName")
-            return
-        }
-
-        if(found) {
-            tableContent[columnIndex][rowIndex] = ""
-            tableContent[columnIndex].remove("")
-            tableContent[columnIndex].add("")
-        }
-
-        tableContent[splitIndex].add(runnerName)
-
-        val body: ValueRange = ValueRange()
-            .setValues(tableContent)
-            .setMajorDimension("COLUMNS")
-
-        sheetService.spreadsheets().values().update(GoogleSpreadSheetConfig.spreadSheetId, tableRange, body)
-            .setValueInputOption("RAW")
-            .execute()
-
-
-    } catch (e: Exception) {
-        logger.error("Updating the google spread sheet failed. ", e)
-    }
-}
-
-fun addMissingColumns(input: MutableList<MutableList<Any>>, sheetService: Sheets): MutableList<MutableList<Any>> {
-    val columnsNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    val lastCellLetterIndex = columnsNames.indexOf(GoogleSpreadSheetConfig.lastDataCell.filter { it.isLetter() })
-    var i = columnsNames.indexOf(GoogleSpreadSheetConfig.firstDataCell.filter { it.isLetter() })
-    val startIndex = i
-    val output = mutableListOf<MutableList<Any>>()
-    while(i <= lastCellLetterIndex) {
-        val currentCell = "'${GoogleSpreadSheetConfig.sheetName}'!${columnsNames[i]}${GoogleSpreadSheetConfig.firstDataCell.filter { it.isDigit() }}"
-        val cellValue = sheetService.spreadsheets().values()
-            .get(GoogleSpreadSheetConfig.spreadSheetId, currentCell)
-            .setMajorDimension("COLUMNS")
-            .execute()
-            .getValues()
-
-        try {
-            if (cellValue[0][0] != input[i - startIndex][0]) {
-                output.add(mutableListOf())
-            } else {
-                output.add(input[i - startIndex])
-            }
-        } catch (e: Exception) {
-            output.add(mutableListOf())
-        }
-
-        i++
-    }
-
-    logger.info("Added missing columns to input")
-    return output
 }
 
 const val ACTIVE_SPLIT_STRING = "\"split_active\": "
@@ -528,33 +428,6 @@ fun getIndexFromSplitName(splitName: String): Pair<Int, Int> {
     } catch (e: Exception) {
         logger.error("An error occurred while reading from HitCounterManager to get the index.", e)
         Pair(-1, -1)
-    }
-}
-
-private const val GOOGLE_CREDENTIALS_FILE_PATH = "data\\google_credentials.json"
-private const val STORED_CREDENTIALS_TOKEN_FOLDER = "data\\tokens"
-fun setupGoogleConnection(): Sheets? {
-    try {
-        val jsonFactory = GsonFactory.getDefaultInstance()
-        val clientSecrets = GoogleClientSecrets.load(jsonFactory, File(GOOGLE_CREDENTIALS_FILE_PATH).reader())
-        val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
-
-        val flow: GoogleAuthorizationCodeFlow = GoogleAuthorizationCodeFlow.Builder(
-            httpTransport, jsonFactory, clientSecrets, Collections.singletonList(SheetsScopes.SPREADSHEETS)
-        )
-            .setDataStoreFactory(FileDataStoreFactory(File(STORED_CREDENTIALS_TOKEN_FOLDER)))
-            .setAccessType("offline")
-            .build()
-
-        val receiver = LocalServerReceiver.Builder().setPort(8888).build()
-
-        return Sheets.Builder(httpTransport, jsonFactory, AuthorizationCodeInstalledApp(flow, receiver).authorize("user"))
-            .setApplicationName("Sheet Service")
-            .build()
-
-    } catch (e: Exception) {
-        logger.error("An error occured while setting up connection to google: ", e)
-        return null
     }
 }
 

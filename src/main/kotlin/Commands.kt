@@ -20,7 +20,6 @@ data class CommandHandlerScope(
     val messageEvent: ChannelMessageEvent,
     val remindHandler: RemindHandler,
     val runNamesRedeemHandler: RunNamesRedeemHandler,
-    val sheetService: Sheets?,
     var addedUserCooldown: Duration = Duration.ZERO,
     var addedCommandCooldown: Duration = Duration.ZERO
 )

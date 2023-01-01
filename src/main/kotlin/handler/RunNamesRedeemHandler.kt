@@ -1,6 +1,5 @@
 package handler
 
-import com.github.twitch4j.chat.TwitchChat
 import config.TwitchBotConfig
 import json
 import kotlinx.serialization.decodeFromString
@@ -9,7 +8,7 @@ import logger
 import java.io.File
 import kotlin.math.absoluteValue
 
-class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFile: File) {
+class RunNamesRedeemHandler(private val runNamesFile: File) {
     private var runNames = listOf<String>()
         private set(value) {
             field = value
