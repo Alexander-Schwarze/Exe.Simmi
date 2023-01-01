@@ -9,6 +9,7 @@ import com.github.philippheuer.credentialmanager.domain.OAuth2Credential
 import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
+import com.github.twitch4j.chat.events.channel.IRCMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
 import com.github.twitch4j.pubsub.events.RewardRedeemedEvent
 import com.google.api.services.sheets.v4.Sheets
@@ -245,6 +246,12 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         }
     }
 
+    twitchClient.eventManager.onEvent(IRCMessageEvent::class.java) { ircEvent ->
+        if(ircEvent.rawMessage.contains("color") && ircEvent.rawMessage.contains("display-name")) {
+            runNamesRedeemHandler.saveNameWithColor(ircEvent.rawMessage.substringAfter(";display-name=").substringBefore(";"), ircEvent.rawMessage.substringAfter(";color=").substringBefore(";"))
+        }
+    }
+
     logger.info("Twitch client started.")
     return twitchClient
 }
@@ -321,7 +328,7 @@ private fun hostServer() {
 }
 
 private const val CURRENT_RUNNER_NAME_DISPLAY_FILE = "data\\currentRunnerNameDisplay.txt"
-private const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunner.json"
+const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunner.json"
 fun updateCurrentRunnerName(currentRunner: RunNameUser) {
     try {
         logger.info("Updating current runner name in display file \"$CURRENT_RUNNER_NAME_DISPLAY_FILE\"")
@@ -353,12 +360,12 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
         getCurrentSplitFromHitCounter()
     }
 
-    val (index, levinshteinDistance) = getIndexFromSplitName(splitName)
+    val (index, levenshteinDistance) = getIndexFromSplitName(splitName)
 
     val currentRunner = json.decodeFromString<RunNameUser>(File(CURRENT_RUNNER_NAME_FILE).readText())
 
     val message = "Runner \"${currentRunner.name}\" died on split $splitName" +
-            if(levinshteinDistance > 3) {
+            if(levenshteinDistance > 3) {
                 "\nThe manual split name was not as close to an existing one. Check the Leaderboard if the value is set correct"
             } else {
                 ""

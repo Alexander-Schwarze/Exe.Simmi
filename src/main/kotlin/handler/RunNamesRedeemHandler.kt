@@ -1,5 +1,6 @@
 package handler
 
+import CURRENT_RUNNER_NAME_FILE
 import config.TwitchBotConfig
 import json
 import kotlinx.serialization.decodeFromString
@@ -14,6 +15,8 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
             field = value
             runNamesFile.writeText(json.encodeToString(field))
         }
+
+    private var chatNamesToColor = mutableMapOf<String, String>()
 
     private val defaultColor = "FFFFFF"
 
@@ -77,10 +80,27 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
             "$name is not in queue. They should redeem it, if they want to change this ${TwitchBotConfig.confirmEmote}"
         }
     }
+
+    fun saveNameWithColor(name: String, color: String) {
+        // color changes will not be updated
+        if(!chatNamesToColor.contains(name)) {
+            chatNamesToColor += name to color
+
+            val newRunNames = runNames as MutableList
+            newRunNames.filter { it.name == name }.forEach { it.chatColor = color }
+            runNames = newRunNames
+
+            val currentRunner = json.decodeFromString<RunNameUser>(File(CURRENT_RUNNER_NAME_FILE).readText())
+            if(currentRunner.name == name && currentRunner.chatColor != color) {
+                currentRunner.chatColor = color
+                File(CURRENT_RUNNER_NAME_FILE).writeText(json.encodeToString(currentRunner))
+            }
+        }
+    }
 }
 
 @kotlinx.serialization.Serializable
 data class RunNameUser (
     val name: String,
-    val chatColor: String
+    var chatColor: String
 )

@@ -113,7 +113,6 @@ class SpreadSheetHandler {
         }
         try {
             logger.info("Starting to update leaderboard")
-            // TODO Get color from twitch chat via IRC
             // TODO Set color to cell and remove color of old cell
 
             var rowIndex = -1
