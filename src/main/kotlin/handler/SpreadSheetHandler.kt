@@ -121,9 +121,10 @@ class SpreadSheetHandler {
             var found = false
 
             tableContent.forEachIndexed{ index, item ->
-                if(item.map { it.toString().lowercase() }.contains(runnerName.lowercase())){
+                val itemLowercase = item.map { it.toString().lowercase() }
+                if(itemLowercase.contains(runnerName.lowercase())){
                     columnIndex = index
-                    rowIndex = item.indexOf(runnerName.lowercase())
+                    rowIndex = itemLowercase.indexOf(runnerName)
                     found = true
                 }
             }

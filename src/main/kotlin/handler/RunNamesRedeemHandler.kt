@@ -68,7 +68,7 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
     }
 
     fun getMessageForPositionInQueue(name: String): String {
-        val index = runNames.indexOf(name)
+        val index = runNames.map { it.lowercase() }.indexOf(name.lowercase())
         return if(index != -1) {
             "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} of ${runNames.size} ${TwitchBotConfig.explanationEmote}"
         } else {

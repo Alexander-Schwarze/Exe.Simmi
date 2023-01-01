@@ -12,7 +12,7 @@ val runnersListCommand: Command = Command(
         val desiredAmount = TwitchBotConfig.amountDisplayedRunnerNames
         val runners = runNamesRedeemHandler.getNextRunners(desiredAmount)
         val name = if(arguments.isNotEmpty()) {
-            arguments[0].trim().lowercase().also { logger.info("Command got called with arguments, name to search for is \"$it\"") }
+            arguments[0].trim().also { logger.info("Command got called with arguments, name to search for is \"$it\"") }
         } else {
             null
         }
