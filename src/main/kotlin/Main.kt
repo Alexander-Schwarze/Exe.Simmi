@@ -22,6 +22,7 @@ import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import handler.RemindHandler
+import handler.RunNameUser
 import handler.RunNamesRedeemHandler
 import handler.SpreadSheetHandler
 import io.ktor.server.application.*
@@ -320,8 +321,8 @@ private fun hostServer() {
 }
 
 private const val CURRENT_RUNNER_NAME_DISPLAY_FILE = "data\\currentRunnerNameDisplay.txt"
-private const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunnerName.json"
-fun updateCurrentRunnerName(currentRunner: String) {
+private const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunner.json"
+fun updateCurrentRunnerName(currentRunner: RunNameUser) {
     try {
         logger.info("Updating current runner name in display file \"$CURRENT_RUNNER_NAME_DISPLAY_FILE\"")
         val currentRunnerNameDisplayFile = File(CURRENT_RUNNER_NAME_DISPLAY_FILE)
@@ -330,7 +331,7 @@ fun updateCurrentRunnerName(currentRunner: String) {
             currentRunnerNameDisplayFile.createNewFile()
         }
 
-        currentRunnerNameDisplayFile.writeText(TwitchBotConfig.currentRunnerNamePreText + " " + currentRunner + " | " + TwitchBotConfig.currentRunnerNamePostText)
+        currentRunnerNameDisplayFile.writeText(TwitchBotConfig.currentRunnerNamePreText + " " + currentRunner.name + " | " + TwitchBotConfig.currentRunnerNamePostText)
 
         logger.info("Updating current runner name in data file \"$CURRENT_RUNNER_NAME_FILE\"")
         val currentRunnerNameFile = File(CURRENT_RUNNER_NAME_FILE)
@@ -354,9 +355,9 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
 
     val (index, levinshteinDistance) = getIndexFromSplitName(splitName)
 
-    val currentRunner = json.decodeFromString<String>(File(CURRENT_RUNNER_NAME_FILE).readText())
+    val currentRunner = json.decodeFromString<RunNameUser>(File(CURRENT_RUNNER_NAME_FILE).readText())
 
-    val message = "Runner \"$currentRunner\" died on split $splitName" + 
+    val message = "Runner \"${currentRunner.name}\" died on split $splitName" +
             if(levinshteinDistance > 3) {
                 "\nThe manual split name was not as close to an existing one. Check the Leaderboard if the value is set correct"
             } else {
@@ -373,7 +374,7 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
     )
 
     val channel = sendMessageToDiscordBot(currentMessageContent)
-    chat.sendMessage(TwitchBotConfig.channel, "Ended run message for \"$currentRunner\" sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
+    chat.sendMessage(TwitchBotConfig.channel, "Ended run message for \"${currentRunner.name}\" sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
     logger.info("Finished saving last runners split")
 }
 

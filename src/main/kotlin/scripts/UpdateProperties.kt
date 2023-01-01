@@ -2,9 +2,9 @@ package scripts
 
 import java.io.File
 
-// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_1-4-3.jar
+// Compile with: kotlinc UpdateProperties.kt -include-runtime -d UpdateProperties_2-0-0.jar
 
-const val latestVersion = "1.5.0"
+const val latestVersion = "2.0.0"
 
 val defaultPropertiesValues = listOf(
     // ClipPlayer properties
@@ -29,7 +29,7 @@ val defaultPropertiesValues = listOf(
     ),
     // GoogleSpreadSheetConfig properties
     mapOf(
-        // Since Version: 1.5.0
+        // Since Version: 2.0.0
         Pair("spread_sheet_id", "abc123"),
         Pair("sheet_name", "Sheet Name"),
         Pair("first_data_cell", "A1"),

@@ -1,13 +1,9 @@
 package commands
 
 import Command
-import DiscordMessageContent
 import config.TwitchBotConfig
-import logger
 import saveLastRunnersSplit
-import sendMessageToDiscordBot
 import updateCurrentRunnerName
-import kotlin.time.Duration.Companion.seconds
 
 val runnerNameCommand: Command = Command(
     names = listOf("rn", "runnername"),
@@ -19,14 +15,14 @@ val runnerNameCommand: Command = Command(
 
         saveLastRunnersSplit(arguments.joinToString(" ").trim())
 
-        val runnerName = runNamesRedeemHandler.popNextRunName()
+        val nextRunner = runNamesRedeemHandler.popNextRunName()
         val twitchChatMessage = "${TwitchBotConfig.remindEmote} Next Runner is: " +
-                if(runnerName != "") {
-                    runnerName
+                if(nextRunner.name != "") {
+                    nextRunner.name
                 } else {
                     "No one, we are missing runners!"
                 }
-        updateCurrentRunnerName(runnerName)
+        updateCurrentRunnerName(nextRunner)
 
         chat.sendMessage(TwitchBotConfig.channel, twitchChatMessage)
     }
