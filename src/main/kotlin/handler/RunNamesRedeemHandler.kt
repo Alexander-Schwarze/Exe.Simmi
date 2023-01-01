@@ -10,7 +10,7 @@ import java.io.File
 import kotlin.math.absoluteValue
 
 class RunNamesRedeemHandler(private val runNamesFile: File) {
-    private var runNames = listOf<RunNameUser>()
+    private var runners = listOf<RunNameUser>()
         private set(value) {
             field = value
             runNamesFile.writeText(json.encodeToString(field))
@@ -21,7 +21,7 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
     private val defaultColor = "FFFFFF"
 
     init {
-        runNames = if (!runNamesFile.exists()) {
+        runners = if (!runNamesFile.exists()) {
             runNamesFile.createNewFile()
             logger.info("Run names file created.")
             mutableListOf()
@@ -44,51 +44,51 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
         }
     }
 
-    fun popNextRunName(): RunNameUser {
-        return if(runNames.isNotEmpty()) {
-            runNames.first().also {
-                runNames = runNames.drop(1).toMutableList()
+    fun popNextRunner(): RunNameUser {
+        return if(runners.isNotEmpty()) {
+            runners.first().also {
+                runners = runners.drop(1).toMutableList()
                 logger.info("Popped new runner: $it")
             }
         } else {
             RunNameUser("", "")
         }.also {
-            logger.info("New run names list: ${runNames.joinToString("|")}")
+            logger.info("New run names list: ${runners.joinToString("|")}")
         }
     }
 
-    fun addRunName(name: String) {
-        runNames = (runNames + RunNameUser(name, defaultColor)).also {
+    fun addRunner(name: String) {
+        runners = (runners + RunNameUser(name, defaultColor)).also {
             logger.info("Added run name $name to the list!")
             logger.info("New run names list: ${it.joinToString("|")}")
         }
     }
 
-    fun getNextRunners(amount: Int): List<String> {
+    fun getNextRunnersList(amount: Int): List<String> {
         return try {
-            runNames.map { it.name }.subList(0, amount.absoluteValue)
+            runners.map { it.name }.subList(0, amount.absoluteValue)
         } catch (e: java.lang.IndexOutOfBoundsException) {
-            runNames.map { it.name }.subList(0, runNames.size)
+            runners.map { it.name }.subList(0, runners.size)
         }
     }
 
     fun getMessageForPositionInQueue(name: String): String {
-        val index = runNames.map { it.name.lowercase() }.indexOf(name.lowercase())
+        val index = runners.map { it.name.lowercase() }.indexOf(name.lowercase())
         return if(index != -1) {
-            "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} of ${runNames.size} ${TwitchBotConfig.explanationEmote}"
+            "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} of ${runners.size} ${TwitchBotConfig.explanationEmote}"
         } else {
             "$name is not in queue. They should redeem it, if they want to change this ${TwitchBotConfig.confirmEmote}"
         }
     }
 
     fun saveNameWithColor(name: String, color: String) {
-        // color changes will not be updated
+        // immediate color changes will not be updated
         if(!chatNamesToColor.contains(name)) {
             chatNamesToColor += name to color
 
-            val newRunNames = runNames as MutableList
+            val newRunNames = runners as MutableList
             newRunNames.filter { it.name == name }.forEach { it.chatColor = color }
-            runNames = newRunNames
+            runners = newRunNames
 
             val currentRunner = json.decodeFromString<RunNameUser>(File(CURRENT_RUNNER_NAME_FILE).readText())
             if(currentRunner.name == name && currentRunner.chatColor != color) {

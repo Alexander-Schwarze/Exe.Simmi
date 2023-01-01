@@ -103,7 +103,7 @@ class SpreadSheetHandler {
         }
     }
 
-    fun updateSpreadSheetLeaderboard(runnerName: RunNameUser, splitIndex: Int) {
+    fun updateSpreadSheetLeaderboard(runner: RunNameUser, splitIndex: Int) {
         if(sheetService == null) {
             logger.error("sheet service was not setup correct. Aborted updating leaderboard...")
             return
@@ -121,15 +121,15 @@ class SpreadSheetHandler {
 
             tableContent.forEachIndexed{ index, item ->
                 val itemLowercase = item.map { it.toString().lowercase() }
-                if(itemLowercase.contains(runnerName.name.lowercase())){
+                if(itemLowercase.contains(runner.name.lowercase())){
                     columnIndex = index
-                    rowIndex = itemLowercase.indexOf(runnerName.name.lowercase())
+                    rowIndex = itemLowercase.indexOf(runner.name.lowercase())
                     found = true
                 }
             }
 
             if(splitIndex <= columnIndex && found) {
-                logger.info("No new distance PB for ${runnerName.name}")
+                logger.info("No new distance PB for ${runner.name}")
                 return
             }
 
@@ -139,7 +139,7 @@ class SpreadSheetHandler {
                 tableContent[columnIndex].add("")
             }
 
-            tableContent[splitIndex].add(runnerName.name)
+            tableContent[splitIndex].add(runner.name)
 
             val body: ValueRange = ValueRange()
                 .setValues(tableContent)

@@ -15,7 +15,7 @@ val runnerNameCommand: Command = Command(
 
         saveLastRunnersSplit(arguments.joinToString(" ").trim())
 
-        val nextRunner = runNamesRedeemHandler.popNextRunName()
+        val nextRunner = runNamesRedeemHandler.popNextRunner()
         val twitchChatMessage = "${TwitchBotConfig.remindEmote} Next Runner is: " +
                 if(nextRunner.name != "") {
                     nextRunner.name
