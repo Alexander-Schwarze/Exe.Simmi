@@ -97,7 +97,7 @@ class SpreadSheetHandler {
             }
 
             logger.info("Added missing columns to input")
-            tableContent = output.also { logger.error(it.toString()) }
+            tableContent = output
         } catch (e: Exception) {
             logger.error("An error occurred while loading the initial table content. Setting table content to an empty list. ", e)
         }
@@ -124,7 +124,7 @@ class SpreadSheetHandler {
                 val itemLowercase = item.map { it.toString().lowercase() }
                 if(itemLowercase.contains(runnerName.lowercase())){
                     columnIndex = index
-                    rowIndex = itemLowercase.indexOf(runnerName)
+                    rowIndex = itemLowercase.indexOf(runnerName.lowercase())
                     found = true
                 }
             }
