@@ -26,7 +26,7 @@ class SpreadSheetHandler {
     private var sheetService: Sheets? = null
     private var tableContent = mutableListOf<MutableList<Any>>()
 
-    private val googleCredentialsFilePath = "data\\google_credentials.json"
+    private val googleCredentialsFilePath = "data\\tokens\\google_credentials.json"
     private val storedCredentialsTokenFolder = "data\\tokens"
 
     fun setupConnectionAndLoadData() {

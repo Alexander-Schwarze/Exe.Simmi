@@ -69,7 +69,7 @@ suspend fun main() = try {
     setupLogging()
     SpreadSheetHandler.instance.setupConnectionAndLoadData()
 
-    val discordToken = File("data/discordtoken.txt").readText()
+    val discordToken = File("data\\tokens\\discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
 
     logger.info("Discord client started.")
@@ -112,7 +112,7 @@ suspend fun main() = try {
 }
 
 private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope: CoroutineScope): TwitchClient {
-    val chatAccountToken = File("data/twitchtoken.txt").readText()
+    val chatAccountToken = File("data\\tokens\\twitchtoken.txt").readText()
     val oAuth2Credential = OAuth2Credential("twitch", chatAccountToken)
 
     val twitchClient = TwitchClientBuilder.builder()
@@ -125,8 +125,8 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     val nextAllowedCommandUsageInstantPerUser = mutableMapOf<Pair<Command, /* user: */ String>, Instant>()
     val nextAllowedCommandUsageInstantPerCommand = mutableMapOf<Command, Instant>()
 
-    val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data/reminders.json"), checkerScope = backgroundCoroutineScope)
-    val runNamesRedeemHandler = RunNamesRedeemHandler(runNamesFile = File("data/runNames.json"))
+    val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data\\saveData\\reminders.json"), checkerScope = backgroundCoroutineScope)
+    val runNamesRedeemHandler = RunNamesRedeemHandler(runNamesFile = File("data\\saveData\\runNames.json"))
 
     twitchClient.chat.run {
         connect()

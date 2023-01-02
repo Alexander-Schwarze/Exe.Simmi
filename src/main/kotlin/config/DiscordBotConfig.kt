@@ -5,7 +5,7 @@ import java.util.*
 
 object DiscordBotConfig {
     private val properties = Properties().apply {
-        load(File("data/discordBotconfig.properties").inputStream())
+        load(File("data\\properties\\discordBotConfig.properties").inputStream())
     }
 
     val feedbackChannelId = Snowflake(properties.getProperty("feedback_channel_id").toLong())
