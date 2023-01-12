@@ -216,12 +216,13 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         )
 
         backgroundCoroutineScope.launch {
+            logger.info("Starting command handler")
             command.handler(commandHandlerScope, parts.drop(1))
 
             val key = command to messageEvent.user.name
-            nextAllowedCommandUsageInstantPerUser[key] = nextAllowedCommandUsageInstantPerUser[key]!! + commandHandlerScope.addedUserCooldown
+            nextAllowedCommandUsageInstantPerUser[key] = Clock.System.now() + commandHandlerScope.addedUserCooldown
 
-            nextAllowedCommandUsageInstantPerCommand[command] = nextAllowedCommandUsageInstantPerCommand[command]!! + commandHandlerScope.addedCommandCooldown
+            nextAllowedCommandUsageInstantPerCommand[command] = Clock.System.now() + commandHandlerScope.addedCommandCooldown
         }
     }
 
