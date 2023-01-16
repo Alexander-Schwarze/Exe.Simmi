@@ -22,10 +22,7 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
-import handler.RemindHandler
-import handler.RunNameUser
-import handler.RunNamesRedeemHandler
-import handler.SpreadSheetHandler
+import handler.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
@@ -67,11 +64,10 @@ val json = Json {
 
 suspend fun main() = try {
     setupLogging()
-    SpreadSheetHandler.instance.setupConnectionAndLoadData()
+    createFolderStructure()
 
     val discordToken = File("data\\tokens\\discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
-
     logger.info("Discord client started.")
 
     CoroutineScope(discordClient.coroutineContext).launch {
@@ -127,6 +123,7 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
 
     val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data\\saveData\\reminders.json"), checkerScope = backgroundCoroutineScope)
     val runNamesRedeemHandler = RunNamesRedeemHandler(runNamesFile = File("data\\saveData\\runNames.json"))
+    SpreadSheetHandler.instance.setupConnectionAndLoadData(runNamesRedeemHandler)
 
     twitchClient.chat.run {
         connect()
@@ -227,7 +224,6 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     }
 
     twitchClient.eventManager.onEvent(RewardRedeemedEvent::class.java) { redeemEvent ->
-
         val redeem = redeems.find { redeemEvent.redemption.reward.id in it.id || redeemEvent.redemption.reward.title in it.id }.also {
             if (it != null) {
                 if(redeemEvent.redemption.reward.title in it.id) {
@@ -243,13 +239,17 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         )
 
         backgroundCoroutineScope.launch {
+            logger.info("Starting redeem handler")
             redeem.handler(redeemHandlerScope)
         }
     }
 
     twitchClient.eventManager.onEvent(IRCMessageEvent::class.java) { ircEvent ->
         if(ircEvent.rawMessage.contains("color") && ircEvent.rawMessage.contains("display-name")) {
-            runNamesRedeemHandler.saveNameWithColor(ircEvent.rawMessage.substringAfter(";display-name=").substringBefore(";"), ircEvent.rawMessage.substringAfter(";color=").substringBefore(";"))
+            runNamesRedeemHandler.saveNameWithColor(
+                name = ircEvent.rawMessage.substringAfter(";display-name=").substringBefore(";"),
+                color = ircEvent.rawMessage.substringAfter(";color=#").substringBefore(";")
+            )
         }
     }
 
@@ -329,7 +329,7 @@ private fun hostServer() {
 }
 
 private const val CURRENT_RUNNER_NAME_DISPLAY_FILE = "data\\currentRunnerNameDisplay.txt"
-const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunner.json"
+const val CURRENT_RUNNER_NAME_FILE = "data\\saveData\\currentRunner.json"
 fun updateCurrentRunnerName(currentRunner: RunNameUser) {
     try {
         logger.info("Updating current runner name in display file \"$CURRENT_RUNNER_NAME_DISPLAY_FILE\"")
@@ -364,6 +364,11 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
     val (index, levenshteinDistance) = getIndexFromSplitName(splitName)
 
     val currentRunner = json.decodeFromString<RunNameUser>(File(CURRENT_RUNNER_NAME_FILE).readText())
+
+    if(currentRunner.name == "") {
+        logger.error("No current runner to save the split")
+        return
+    }
 
     val message = "Runner \"${currentRunner.name}\" died on split $splitName" +
             if(levenshteinDistance > 3) {
@@ -437,6 +442,18 @@ fun getIndexFromSplitName(splitName: String): Pair<Int, Int> {
     } catch (e: Exception) {
         logger.error("An error occurred while reading from HitCounterManager to get the index.", e)
         Pair(-1, -1)
+    }
+}
+
+fun createFolderStructure() {
+    listOf(
+        File("data\\saveData"),
+        File("data\\tokens")
+    ).forEach {  folder ->
+        if(!folder.exists() || !folder.isDirectory) {
+            logger.info("Created folder ${folder.name}")
+            folder.mkdirs()
+        }
     }
 }
 

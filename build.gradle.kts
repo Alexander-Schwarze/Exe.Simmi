@@ -52,6 +52,7 @@ dependencies {
     implementation("com.google.apis:google-api-services-sheets:v4-rev20221216-2.0.0")
 
     implementation("org.apache.commons:commons-text:1.10.0")
+    implementation(kotlin("script-runtime"))
 }
 
 

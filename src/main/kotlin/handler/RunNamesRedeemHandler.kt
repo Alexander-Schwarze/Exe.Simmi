@@ -18,7 +18,7 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
 
     private var chatNamesToColor = mutableMapOf<String, String>()
 
-    private val defaultColor = "FFFFFF"
+    private val defaultColorHex = "FFFFFF"
 
     init {
         runners = if (!runNamesFile.exists()) {
@@ -58,7 +58,7 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
     }
 
     fun addRunner(name: String) {
-        runners = (runners + RunNameUser(name, defaultColor)).also {
+        runners = (runners + RunNameUser(name, defaultColorHex)).also {
             logger.info("Added run name $name to the list!")
             logger.info("New run names list: ${it.joinToString("|")}")
         }
@@ -87,13 +87,18 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
             chatNamesToColor += name to color
 
             val newRunNames = runners as MutableList
-            newRunNames.filter { it.name == name }.forEach { it.chatColor = color }
+            newRunNames.filter { it.name == name && it.chatColor == defaultColorHex }.forEach { it.chatColor = color }
             runners = newRunNames
 
-            val currentRunner = json.decodeFromString<RunNameUser>(File(CURRENT_RUNNER_NAME_FILE).readText())
-            if(currentRunner.name == name && currentRunner.chatColor != color) {
+            val currentRunnerFile = File(CURRENT_RUNNER_NAME_FILE)
+            if(!currentRunnerFile.exists()) {
+                currentRunnerFile.createNewFile()
+                return
+            }
+            val currentRunner = json.decodeFromString<RunNameUser>(currentRunnerFile.readText())
+            if(currentRunner.name == name && currentRunner.chatColor == defaultColorHex) {
                 currentRunner.chatColor = color
-                File(CURRENT_RUNNER_NAME_FILE).writeText(json.encodeToString(currentRunner))
+                currentRunnerFile.writeText(json.encodeToString(currentRunner))
             }
         }
     }
