@@ -25,21 +25,21 @@ val runnersListCommand: Command = Command(
                     "No further runners. Redeem it, I dare ya ${TwitchBotConfig.confirmEmote}"
                 } else {
                     "Currently in queue, the next " +
-                            if (runners.size > 1) {
-                                if (runners.size < desiredAmount) {
-                                    "${runners.size} "
-                                } else {
-                                    "$desiredAmount "
-                                }
-                            } else {
-                                ""
-                            } +
-                            "${"runner".pluralForm(runners.size)} ${"is".pluralForm(runners.size)}: ${
-                                runners.map { it }.let { names ->
-                                    listOf(names.dropLast(1).joinToString(), names.last()).filter { it.isNotBlank() }
-                                        .joinToString(" and ")
-                                }
-                            }"
+                    if (runners.size > 1) {
+                        if (runners.size < desiredAmount) {
+                            "${runners.size} "
+                        } else {
+                            "$desiredAmount "
+                        }
+                    } else {
+                        ""
+                    } +
+                    "${"runner".pluralForm(runners.size)} ${"is".pluralForm(runners.size)}: ${
+                        runners.map { it }.let { names ->
+                            listOf(names.dropLast(1).joinToString(), names.last()).filter { it.isNotBlank() }
+                                .joinToString(" and ")
+                        }
+                    }"
                 }.also { logger.info("Posted the current queue") }
             }
         )

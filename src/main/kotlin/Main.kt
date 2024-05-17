@@ -9,12 +9,8 @@ import com.github.philippheuer.credentialmanager.domain.OAuth2Credential
 import com.github.twitch4j.TwitchClient
 import com.github.twitch4j.TwitchClientBuilder
 import com.github.twitch4j.chat.events.channel.ChannelMessageEvent
-import com.github.twitch4j.chat.events.channel.IRCMessageEvent
 import com.github.twitch4j.common.enums.CommandPermission
 import com.github.twitch4j.pubsub.events.RewardRedeemedEvent
-import com.google.api.services.sheets.v4.Sheets
-import com.google.api.services.sheets.v4.model.ValueRange
-import config.GoogleSpreadSheetConfig
 import config.TwitchBotConfig
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.createEmbed
@@ -140,6 +136,13 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     twitchClient.pubSub.listenForChannelPointsRedemptionEvents(oAuth2Credential, channelId)
 
     twitchClient.eventManager.onEvent(ChannelMessageEvent::class.java) { messageEvent ->
+        messageEvent.messageEvent.getTagValue("color").orElse(null)?.let {
+            runNamesRedeemHandler.saveNameWithColor(
+                name = messageEvent.user.name,
+                color = it.removePrefix("#")
+            )
+        }
+
         val message = messageEvent.message
         if (!message.startsWith(TwitchBotConfig.commandPrefix)) {
             return@onEvent
@@ -224,11 +227,9 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     }
 
     twitchClient.eventManager.onEvent(RewardRedeemedEvent::class.java) { redeemEvent ->
-        val redeem = redeems.find { redeemEvent.redemption.reward.id in it.id || redeemEvent.redemption.reward.title in it.id }.also {
-            if (it != null) {
-                if(redeemEvent.redemption.reward.title in it.id) {
-                    logger.warn("Redeem ${redeemEvent.redemption.reward.title}. Please use following ID in the properties file instead of the name: ${redeemEvent.redemption.reward.id}")
-                }
+        val redeem = redeems.find { redeemEvent.redemption.reward.id in it.id || redeemEvent.redemption.reward.title in it.id }?.also {
+            if (redeemEvent.redemption.reward.title in it.id) {
+                logger.warn("Redeem ${redeemEvent.redemption.reward.title}. Please use following ID in the properties file instead of the name: ${redeemEvent.redemption.reward.id}")
             }
         } ?: return@onEvent
 
@@ -241,15 +242,6 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         backgroundCoroutineScope.launch {
             logger.info("Starting redeem handler")
             redeem.handler(redeemHandlerScope)
-        }
-    }
-
-    twitchClient.eventManager.onEvent(IRCMessageEvent::class.java) { ircEvent ->
-        if(ircEvent.rawMessage.contains("color") && ircEvent.rawMessage.contains("display-name")) {
-            runNamesRedeemHandler.saveNameWithColor(
-                name = ircEvent.rawMessage.substringAfter(";display-name=").substringBefore(";"),
-                color = ircEvent.rawMessage.substringAfter(";color=#").substringBefore(";")
-            )
         }
     }
 

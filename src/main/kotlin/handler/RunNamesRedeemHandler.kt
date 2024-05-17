@@ -3,6 +3,7 @@ package handler
 import CURRENT_RUNNER_NAME_FILE
 import config.TwitchBotConfig
 import json
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import logger
@@ -64,13 +65,12 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
         }
     }
 
-    fun getNextRunnersList(amount: Int): List<String> {
-        return try {
+    fun getNextRunnersList(amount: Int) =
+        try {
             runners.map { it.name }.subList(0, amount.absoluteValue)
-        } catch (e: java.lang.IndexOutOfBoundsException) {
+        } catch (e: IndexOutOfBoundsException) {
             runners.map { it.name }.subList(0, runners.size)
         }
-    }
 
     fun getMessageForPositionInQueue(name: String): String {
         val index = runners.map { it.name.lowercase() }.indexOf(name.lowercase())
@@ -83,29 +83,27 @@ class RunNamesRedeemHandler(private val runNamesFile: File) {
 
     fun saveNameWithColor(name: String, color: String) {
         // immediate color changes will not be updated
-        if(!chatNamesToColor.contains(name)) {
+        if(name !in chatNamesToColor) {
             chatNamesToColor += name to color
 
-            val newRunNames = runners as MutableList
-            newRunNames.filter { it.name == name && it.chatColor == defaultColorHex }.forEach { it.chatColor = color }
-            runners = newRunNames
+            runners = runners.map { if (it.name == name && it.chatColor == defaultColorHex) it.copy(chatColor = color) else it }
 
             val currentRunnerFile = File(CURRENT_RUNNER_NAME_FILE)
             if(!currentRunnerFile.exists()) {
                 currentRunnerFile.createNewFile()
                 return
             }
+
             val currentRunner = json.decodeFromString<RunNameUser>(currentRunnerFile.readText())
             if(currentRunner.name == name && currentRunner.chatColor == defaultColorHex) {
-                currentRunner.chatColor = color
-                currentRunnerFile.writeText(json.encodeToString(currentRunner))
+                currentRunnerFile.writeText(json.encodeToString(currentRunner.copy(chatColor = color)))
             }
         }
     }
 }
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class RunNameUser (
     val name: String,
-    var chatColor: String
+    val chatColor: String
 )

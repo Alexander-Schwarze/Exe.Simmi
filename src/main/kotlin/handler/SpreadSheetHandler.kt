@@ -22,6 +22,7 @@ class SpreadSheetHandler {
             SpreadSheetHandler()
         }
     }
+
     private val tableRange = "'${GoogleSpreadSheetConfig.sheetName}'!${GoogleSpreadSheetConfig.firstDataCell}:${GoogleSpreadSheetConfig.lastDataCell}"
 
     private var sheetService: Sheets? = null
@@ -32,43 +33,62 @@ class SpreadSheetHandler {
     private val storedCredentialsTokenFolder = "data\\tokens"
 
     private val defaultColorRGBA = Color().setRed(1.0f).setGreen(1.0f).setBlue(1.0f).setAlpha(1.0f)
-    //private var
 
     fun setupConnectionAndLoadData(runNamesRedeemHandler: RunNamesRedeemHandler) {
-        try {
-            val jsonFactory = GsonFactory.getDefaultInstance()
-            val clientSecrets = GoogleClientSecrets.load(jsonFactory, File(googleCredentialsFilePath).reader())
-            val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
+        for(i in 0..1) {
+            try {
+                val jsonFactory = GsonFactory.getDefaultInstance()
+                val clientSecrets = GoogleClientSecrets.load(jsonFactory, File(googleCredentialsFilePath).reader())
+                val httpTransport = GoogleNetHttpTransport.newTrustedTransport()
 
-            val flow: GoogleAuthorizationCodeFlow = GoogleAuthorizationCodeFlow.Builder(
-                httpTransport, jsonFactory, clientSecrets, Collections.singletonList(SheetsScopes.SPREADSHEETS)
-            )
-                .setDataStoreFactory(FileDataStoreFactory(File(storedCredentialsTokenFolder)))
-                .setAccessType("offline")
-                .build()
+                val flow: GoogleAuthorizationCodeFlow = GoogleAuthorizationCodeFlow.Builder(
+                    httpTransport, jsonFactory, clientSecrets, Collections.singletonList(SheetsScopes.SPREADSHEETS)
+                )
+                    .setDataStoreFactory(FileDataStoreFactory(File(storedCredentialsTokenFolder)))
+                    .setAccessType("offline")
+                    .build()
 
-            val receiver = LocalServerReceiver.Builder().setPort(8888).build()
+                val receiver = LocalServerReceiver.Builder().setPort(8888).build()
 
-            sheetService = Sheets.Builder(httpTransport, jsonFactory, AuthorizationCodeInstalledApp(flow, receiver).authorize("user"))
-                .setApplicationName("Sheet Service")
-                .build()
+                sheetService = Sheets.Builder(
+                    httpTransport,
+                    jsonFactory,
+                    AuthorizationCodeInstalledApp(flow, receiver).authorize("user")
+                )
+                    .setApplicationName("Sheet Service")
+                    .build()
 
-        } catch (e: Exception) {
-            logger.error("An error occured while setting up connection to google: ", e)
+            } catch (e: Exception) {
+                logger.error("An error occured while setting up connection to Google: ", e)
+            }
+
+            try {
+                // dummy test to see if the credentials need to be refreshed
+                sheetService?.spreadsheets()?.values()
+                    ?.get(GoogleSpreadSheetConfig.spreadSheetId, "A1:A1")
+                    ?.execute()
+            } catch (e: Exception) {
+                logger.warn("Check for sheetService failed. Deleting token and trying again...")
+                File("$storedCredentialsTokenFolder\\StoredCredential").delete()
+                continue
+            }
+
+            break
         }
 
-        logger.info("Connected to google spread sheet service")
+        logger.info("Connected to Google Spreadsheet service")
 
         loadTableContentAndColor(runNamesRedeemHandler)
     }
 
     private fun loadTableContentAndColor(runNamesRedeemHandler: RunNamesRedeemHandler) {
-        if(sheetService == null) {
+        val sheetService = sheetService ?: run {
             logger.error("Sheet Service is not setup. Aborting leaderboard handling... ")
             return
         }
+
         try {
-            val input = sheetService!!.spreadsheets().values()
+            val input = sheetService.spreadsheets().values()
                 .get(GoogleSpreadSheetConfig.spreadSheetId, tableRange)
                 .setMajorDimension("COLUMNS")
                 .execute()
@@ -81,7 +101,7 @@ class SpreadSheetHandler {
             while (i <= lastCellLetterIndex) {
                 val currentCell =
                     "'${GoogleSpreadSheetConfig.sheetName}'!${transformLetterFromToIndex(i.toString())}${GoogleSpreadSheetConfig.firstDataCell.filter { it.isDigit() }}"
-                val cellValue = sheetService!!.spreadsheets().values()
+                val cellValue = sheetService.spreadsheets().values()
                     .get(GoogleSpreadSheetConfig.spreadSheetId, currentCell)
                     .setMajorDimension("COLUMNS")
                     .execute()
@@ -104,7 +124,7 @@ class SpreadSheetHandler {
             tableContent = output
 
 
-            val formatResult = sheetService!!.spreadsheets()
+            val formatResult = sheetService.spreadsheets()
                 .get(GoogleSpreadSheetConfig.spreadSheetId)
                 .setRanges(mutableListOf(tableRange))
                 .setIncludeGridData(true)
@@ -128,7 +148,7 @@ class SpreadSheetHandler {
                                     Integer.toHexString((it.red * 255).toInt()).uppercase(Locale.getDefault())
                                 } catch (_: Exception) {
                                     "00"
-                                }   +
+                                } +
                                 try {
                                     Integer.toHexString((it.green * 255).toInt()).uppercase(Locale.getDefault())
                                 } catch (_: Exception) {
@@ -145,37 +165,10 @@ class SpreadSheetHandler {
                 }
             }
 
-            //updateCellsBackgroundColorTEST()
             logger.info("Received color data from spread sheet")
         } catch (e: Exception) {
             logger.error("An error occurred while loading the initial table content. Setting table content to an empty list. ", e)
         }
-    }
-
-    private fun updateCellsBackgroundColorTEST() {
-        val data = mutableListOf<RowData>()
-        tableColor.forEach { row ->
-            val currentRow = mutableListOf<CellData>()
-            row.forEach { color ->
-                currentRow.add(
-                    CellData().setUserEnteredFormat(CellFormat().setBackgroundColor(color))
-                )
-            }
-            data.add(RowData().setValues(currentRow))
-        }
-
-        // TODO Fix this, it does not work yet
-        // We are on the right path, just have to get the coloring range right
-        val requestList = mutableListOf(
-            Request().setUpdateCells(
-                UpdateCellsRequest()
-                    .setRange(GridRange().setStartRowIndex(4).setEndRowIndex(35).setStartColumnIndex(1).setEndColumnIndex(14))
-                    .setFields("userEnteredFormat.backgroundColor")
-                    .setRows(data)
-            )
-        )
-        val request = BatchUpdateSpreadsheetRequest().setRequests(requestList)
-        //sheetService!!.spreadsheets().batchUpdate(GoogleSpreadSheetConfig.spreadSheetId, request).execute()
     }
 
     private fun updateCellsBackgroundColor(oldRowIndex: Int, oldColumnIndex: Int, newRowIndex: Int, newColumnIndex: Int, hexColor: String) {
@@ -244,9 +237,7 @@ class SpreadSheetHandler {
                     .setRows(data)
             )
         )
-        // Maybe this is the issue?
-        // https://stackoverflow.com/questions/71768695/workaround-google-sheets-api-does-not-accept-range-request-without-specifying-de
-        // https://stackoverflow.com/questions/47027374/message-invalid-requests0-updatecells-attempting-to-write-column-26-be
+
         val request = BatchUpdateSpreadsheetRequest().setRequests(requestList)
         sheetService!!.spreadsheets().batchUpdate(GoogleSpreadSheetConfig.spreadSheetId, request).execute()
     }
@@ -266,7 +257,7 @@ class SpreadSheetHandler {
             var columnIndex = -1
             var found = false
 
-            tableContent.forEachIndexed{ index, item ->
+            tableContent.forEachIndexed { index, item ->
                 val itemLowercase = item.map { it.toString().lowercase() }
                 if(itemLowercase.contains(runner.name.lowercase())){
                     columnIndex = index
@@ -279,8 +270,7 @@ class SpreadSheetHandler {
                 logger.info("No new distance PB for ${runner.name}")
                 return
             }
-            
-            // TODO Call the function here
+
             val newColumnIndex = tableContent[splitIndex].map { it.toString().lowercase() }.indexOf(runner.name.lowercase())
             updateCellsBackgroundColor(rowIndex, columnIndex,
                 if(newColumnIndex != -1) {
