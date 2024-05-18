@@ -1,29 +1,34 @@
 package handler
 
-import com.github.twitch4j.chat.TwitchChat
+import CURRENT_RUNNER_NAME_FILE
 import config.TwitchBotConfig
 import json
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import logger
 import java.io.File
 import kotlin.math.absoluteValue
 
-class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFile: File) {
-    private var runNames = listOf<String>()
+class RunNamesRedeemHandler(private val runNamesFile: File) {
+    private var runners = listOf<RunNameUser>()
         private set(value) {
             field = value
             runNamesFile.writeText(json.encodeToString(field))
         }
 
+    private var chatNamesToColor = mutableMapOf<String, String>()
+
+    private val defaultColorHex = "FFFFFF"
+
     init {
-        runNames = if (!runNamesFile.exists()) {
+        runners = if (!runNamesFile.exists()) {
             runNamesFile.createNewFile()
             logger.info("Run names file created.")
             mutableListOf()
         } else {
             try {
-                json.decodeFromString<List<String>>(runNamesFile.readText()).toMutableList().also { currentRemindersData ->
+                json.decodeFromString<List<RunNameUser>>(runNamesFile.readText()).toMutableList().also { currentRemindersData ->
                     logger.info("Existing run names file found! Values: ${currentRemindersData.joinToString(" | ")}")
                 }
             } catch (e: Exception) {
@@ -40,40 +45,65 @@ class RunNamesRedeemHandler(private val chat: TwitchChat, private val runNamesFi
         }
     }
 
-    fun popNextRunName(): String {
-        return if(runNames.isNotEmpty()) {
-            runNames.first().also {
-                runNames = runNames.drop(1).toMutableList()
+    fun popNextRunner(): RunNameUser {
+        return if(runners.isNotEmpty()) {
+            runners.first().also {
+                runners = runners.drop(1).toMutableList()
                 logger.info("Popped new runner: $it")
             }
         } else {
-            ""
+            RunNameUser("", "")
         }.also {
-            logger.info("New run names list: ${runNames.joinToString("|")}")
+            logger.info("New run names list: ${runners.joinToString("|")}")
         }
     }
 
-    fun addRunName(name: String) {
-        runNames = (runNames + name).also {
+    fun addRunner(name: String) {
+        runners = (runners + RunNameUser(name, defaultColorHex)).also {
             logger.info("Added run name $name to the list!")
             logger.info("New run names list: ${it.joinToString("|")}")
         }
     }
 
-    fun getNextRunners(amount: Int): List<String> {
-        return try {
-            runNames.subList(0, amount.absoluteValue)
-        } catch (e: java.lang.IndexOutOfBoundsException) {
-            runNames.subList(0, runNames.size)
+    fun getNextRunnersList(amount: Int) =
+        try {
+            runners.map { it.name }.subList(0, amount.absoluteValue)
+        } catch (e: IndexOutOfBoundsException) {
+            runners.map { it.name }.subList(0, runners.size)
         }
-    }
 
     fun getMessageForPositionInQueue(name: String): String {
-        val index = runNames.indexOf(name)
+        val index = runners.map { it.name.lowercase() }.indexOf(name.lowercase())
         return if(index != -1) {
-            "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} of ${runNames.size} ${TwitchBotConfig.explanationEmote}"
+            "Stupid question, stop being impatient ${TwitchBotConfig.runnersListIndexEmote} $name's position in queue is ${index + 1} of ${runners.size} ${TwitchBotConfig.explanationEmote}"
         } else {
             "$name is not in queue. They should redeem it, if they want to change this ${TwitchBotConfig.confirmEmote}"
         }
     }
+
+    fun saveNameWithColor(name: String, color: String) {
+        // immediate color changes will not be updated
+        if(name !in chatNamesToColor) {
+            chatNamesToColor += name to color
+
+            runners = runners.map { if (it.name == name && it.chatColor == defaultColorHex) it.copy(chatColor = color) else it }
+
+            val currentRunnerFile = File(CURRENT_RUNNER_NAME_FILE)
+            if(!currentRunnerFile.exists()) {
+                currentRunnerFile.createNewFile()
+                return
+            }
+
+            val currentRunner = json.decodeFromString<RunNameUser>(currentRunnerFile.readText())
+            if(currentRunner.name == name && currentRunner.chatColor == defaultColorHex) {
+                currentRunnerFile.writeText(json.encodeToString(currentRunner.copy(chatColor = color)))
+            }
+        }
+    }
 }
+
+@Serializable
+data class RunNameUser (
+    val name: String,
+    val chatColor: String
+)

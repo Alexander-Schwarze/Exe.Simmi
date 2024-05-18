@@ -18,8 +18,7 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
-import handler.RemindHandler
-import handler.RunNamesRedeemHandler
+import handler.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
@@ -39,6 +38,7 @@ import kotlinx.datetime.toJavaInstant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.apache.commons.text.similarity.LevenshteinDistance
 import org.jsoup.Jsoup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -46,6 +46,7 @@ import java.io.*
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.format.DateTimeFormatterBuilder
+import java.util.*
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -59,10 +60,10 @@ val json = Json {
 
 suspend fun main() = try {
     setupLogging()
+    createFolderStructure()
 
-    val discordToken = File("data/discordtoken.txt").readText()
+    val discordToken = File("data\\tokens\\discordtoken.txt").readText()
     val discordClient = Kord(discordToken)
-
     logger.info("Discord client started.")
 
     CoroutineScope(discordClient.coroutineContext).launch {
@@ -103,7 +104,7 @@ suspend fun main() = try {
 }
 
 private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope: CoroutineScope): TwitchClient {
-    val chatAccountToken = File("data/twitchtoken.txt").readText()
+    val chatAccountToken = File("data\\tokens\\twitchtoken.txt").readText()
     val oAuth2Credential = OAuth2Credential("twitch", chatAccountToken)
 
     val twitchClient = TwitchClientBuilder.builder()
@@ -116,8 +117,9 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     val nextAllowedCommandUsageInstantPerUser = mutableMapOf<Pair<Command, /* user: */ String>, Instant>()
     val nextAllowedCommandUsageInstantPerCommand = mutableMapOf<Command, Instant>()
 
-    val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data/reminders.json"), checkerScope = backgroundCoroutineScope)
-    val runNamesRedeemHandler = RunNamesRedeemHandler(chat = twitchClient.chat, runNamesFile = File("data/runNames.json"))
+    val remindHandler = RemindHandler(chat = twitchClient.chat, reminderFile = File("data\\saveData\\reminders.json"), checkerScope = backgroundCoroutineScope)
+    val runNamesRedeemHandler = RunNamesRedeemHandler(runNamesFile = File("data\\saveData\\runNames.json"))
+    SpreadSheetHandler.instance.setupConnectionAndLoadData(runNamesRedeemHandler)
 
     twitchClient.chat.run {
         connect()
@@ -134,6 +136,13 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
     twitchClient.pubSub.listenForChannelPointsRedemptionEvents(oAuth2Credential, channelId)
 
     twitchClient.eventManager.onEvent(ChannelMessageEvent::class.java) { messageEvent ->
+        messageEvent.messageEvent.getTagValue("color").orElse(null)?.let {
+            runNamesRedeemHandler.saveNameWithColor(
+                name = messageEvent.user.name,
+                color = it.removePrefix("#")
+            )
+        }
+
         val message = messageEvent.message
         if (!message.startsWith(TwitchBotConfig.commandPrefix)) {
             return@onEvent
@@ -207,22 +216,20 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         )
 
         backgroundCoroutineScope.launch {
+            logger.info("Starting command handler")
             command.handler(commandHandlerScope, parts.drop(1))
 
             val key = command to messageEvent.user.name
-            nextAllowedCommandUsageInstantPerUser[key] = nextAllowedCommandUsageInstantPerUser[key]!! + commandHandlerScope.addedUserCooldown
+            nextAllowedCommandUsageInstantPerUser[key] = Clock.System.now() + commandHandlerScope.addedUserCooldown
 
-            nextAllowedCommandUsageInstantPerCommand[command] = nextAllowedCommandUsageInstantPerCommand[command]!! + commandHandlerScope.addedCommandCooldown
+            nextAllowedCommandUsageInstantPerCommand[command] = Clock.System.now() + commandHandlerScope.addedCommandCooldown
         }
     }
 
     twitchClient.eventManager.onEvent(RewardRedeemedEvent::class.java) { redeemEvent ->
-
-        val redeem = redeems.find { redeemEvent.redemption.reward.id in it.id || redeemEvent.redemption.reward.title in it.id }.also {
-            if (it != null) {
-                if(redeemEvent.redemption.reward.title in it.id) {
-                    logger.warn("Redeem ${redeemEvent.redemption.reward.title}. Please use following ID in the properties file instead of the name: ${redeemEvent.redemption.reward.id}")
-                }
+        val redeem = redeems.find { redeemEvent.redemption.reward.id in it.id || redeemEvent.redemption.reward.title in it.id }?.also {
+            if (redeemEvent.redemption.reward.title in it.id) {
+                logger.warn("Redeem ${redeemEvent.redemption.reward.title}. Please use following ID in the properties file instead of the name: ${redeemEvent.redemption.reward.id}")
             }
         } ?: return@onEvent
 
@@ -233,6 +240,7 @@ private suspend fun setupTwitchBot(discordClient: Kord, backgroundCoroutineScope
         )
 
         backgroundCoroutineScope.launch {
+            logger.info("Starting redeem handler")
             redeem.handler(redeemHandlerScope)
         }
     }
@@ -313,8 +321,8 @@ private fun hostServer() {
 }
 
 private const val CURRENT_RUNNER_NAME_DISPLAY_FILE = "data\\currentRunnerNameDisplay.txt"
-private const val CURRENT_RUNNER_NAME_FILE = "data\\currentRunnerName.json"
-fun updateCurrentRunnerName(currentRunner: String) {
+const val CURRENT_RUNNER_NAME_FILE = "data\\saveData\\currentRunner.json"
+fun updateCurrentRunnerName(currentRunner: RunNameUser) {
     try {
         logger.info("Updating current runner name in display file \"$CURRENT_RUNNER_NAME_DISPLAY_FILE\"")
         val currentRunnerNameDisplayFile = File(CURRENT_RUNNER_NAME_DISPLAY_FILE)
@@ -323,7 +331,7 @@ fun updateCurrentRunnerName(currentRunner: String) {
             currentRunnerNameDisplayFile.createNewFile()
         }
 
-        currentRunnerNameDisplayFile.writeText(TwitchBotConfig.currentRunnerNamePreText + " " + currentRunner + " | " + TwitchBotConfig.currentRunnerNamePostText)
+        currentRunnerNameDisplayFile.writeText(TwitchBotConfig.currentRunnerNamePreText + " " + currentRunner.name + " | " + TwitchBotConfig.currentRunnerNamePostText)
 
         logger.info("Updating current runner name in data file \"$CURRENT_RUNNER_NAME_FILE\"")
         val currentRunnerNameFile = File(CURRENT_RUNNER_NAME_FILE)
@@ -344,9 +352,24 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
         logger.info("Extracting name from HitCounter")
         getCurrentSplitFromHitCounter()
     }
-    val currentRunner = json.decodeFromString<String>(File(CURRENT_RUNNER_NAME_FILE).readText())
 
-    val message = "Runner \"$currentRunner\" died on split $splitName"
+    val (index, levenshteinDistance) = getIndexFromSplitName(splitName)
+
+    val currentRunner = json.decodeFromString<RunNameUser>(File(CURRENT_RUNNER_NAME_FILE).readText())
+
+    if(currentRunner.name == "") {
+        logger.error("No current runner to save the split")
+        return
+    }
+
+    val message = "Runner \"${currentRunner.name}\" died on split $splitName" +
+            if(levenshteinDistance > 3) {
+                "\nThe manual split name was not as close to an existing one. Check the Leaderboard if the value is set correct"
+            } else {
+                ""
+            }
+
+    SpreadSheetHandler.instance.updateSpreadSheetLeaderboard(currentRunner, index)
 
     val currentMessageContent = DiscordMessageContent(
         message = DiscordMessageContent.Message.FromText(message),
@@ -356,7 +379,7 @@ suspend fun CommandHandlerScope.saveLastRunnersSplit(overrideSplit: String) {
     )
 
     val channel = sendMessageToDiscordBot(currentMessageContent)
-    chat.sendMessage(TwitchBotConfig.channel, "Ended run message for \"$currentRunner\" sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
+    chat.sendMessage(TwitchBotConfig.channel, "Ended run message for \"${currentRunner.name}\" sent in #${channel.name} ${TwitchBotConfig.confirmEmote}")
     logger.info("Finished saving last runners split")
 }
 
@@ -383,6 +406,46 @@ fun getCurrentSplitFromHitCounter(): String {
     } catch (e: Exception) {
         logger.error("An error occurred while reading from HitCounterManager.", e)
         "Error"
+    }
+}
+
+fun getIndexFromSplitName(splitName: String): Pair<Int, Int> {
+    return try {
+        val scriptElement = Jsoup.parse(File(TwitchBotConfig.hitCounterLocation + "\\HitCounter.html")).getElementsByTag("script").first()
+        val cleanedUpSplitNames = scriptElement?.html()?.split("\n")?.filter {
+            it.contains("[") && it.contains("]")
+        }?.map {
+            org.jsoup.parser.Parser.unescapeEntities(
+                it.split(",")[0].let { item ->
+                    val result = item.replace("\"", "")
+                    result.replace("[", "")
+                },
+                true
+            )
+        }
+
+        val nameAndDistance = cleanedUpSplitNames?.map {
+            it to LevenshteinDistance.getDefaultInstance().apply(it.lowercase(), splitName.lowercase())
+        }?.minBy { (_, levenshteinDistance) -> levenshteinDistance }
+
+        val index = cleanedUpSplitNames?.indexOf(nameAndDistance?.first!!)
+
+        Pair(index!!, nameAndDistance?.second!!)
+    } catch (e: Exception) {
+        logger.error("An error occurred while reading from HitCounterManager to get the index.", e)
+        Pair(-1, -1)
+    }
+}
+
+fun createFolderStructure() {
+    listOf(
+        File("data\\saveData"),
+        File("data\\tokens")
+    ).forEach {  folder ->
+        if(!folder.exists() || !folder.isDirectory) {
+            logger.info("Created folder ${folder.name}")
+            folder.mkdirs()
+        }
     }
 }
 

@@ -6,7 +6,7 @@ import kotlin.time.Duration.Companion.seconds
 
 object TwitchBotConfig {
     private val properties = Properties().apply {
-        load(File("data/twitchBotConfig.properties").inputStream())
+        load(File("data\\properties\\twitchBotConfig.properties").inputStream())
     }
 
     val channel: String = properties.getProperty("channel")
